@@ -3,14 +3,17 @@ package bangbang.gourmet.user.controller;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.user.controller.dto.KakaoTokenResponse;
+import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
 import bangbang.gourmet.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -19,6 +22,7 @@ public class UserController {
     @GetMapping("/auth/kakao/callback")
     public Response<String> signup(@RequestParam String code){
         KakaoTokenResponse tokens = userService.getKakaoToken(code);
+        KakaoUserInfo userInfo = userService.getKakaoUser(tokens.accessToken());
 
         return Response.success(SuccessCode.SUCCESS, "호출 성공");
     }
