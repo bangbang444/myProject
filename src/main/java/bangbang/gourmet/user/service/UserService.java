@@ -1,7 +1,7 @@
 package bangbang.gourmet.user.service;
 
 import bangbang.gourmet.user.controller.dto.KakaoTokenResponse;
-import bangbang.gourmet.user.repository.UserRepository;
+import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -41,5 +41,19 @@ public class UserService {
             .retrieve()
             .bodyToMono(KakaoTokenResponse.class)
             .block();
+    }
+
+    public KakaoUserInfo getKakaoUser(String accessToken) {
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://kapi.kakao.com")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .build();
+
+        return webClient.get()
+                .uri("/v2/user/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .bodyToMono(KakaoUserInfo.class)
+                .block();
     }
 }
