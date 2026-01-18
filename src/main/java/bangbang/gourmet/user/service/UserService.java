@@ -23,18 +23,14 @@ import static bangbang.gourmet.common.domain.SocialProvider.*;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private final WebClient kakaoAuthClient;
+    private final WebClient kakaoApiClient;
     private final KakaoProperties kakaoProperties;
     private final UserRepository userRepository;
 
     public KakaoTokenResponse getKakaoToken(String code){
-
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://kauth.kakao.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .build();
-
         // TODO: 동기 - 비동기
-        return webClient.post()
+        return kakaoAuthClient.post()
             .uri("/oauth/token")
             .body(BodyInserters.fromFormData("grant_type", "authorization_code")
                     .with("client_id", kakaoProperties.id()) // REST API 키
@@ -47,12 +43,7 @@ public class UserService {
     }
 
     public KakaoUserInfo getKakaoUser(String accessToken) {
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://kapi.kakao.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                .build();
-
-        return webClient.get()
+        return kakaoApiClient.get()
                 .uri("/v2/user/me")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .retrieve()
