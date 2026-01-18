@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.config.KakaoProperties;
 import bangbang.gourmet.user.controller.dto.KakaoTokenResponse;
 import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
 import bangbang.gourmet.user.controller.dto.LoginResponse;
@@ -7,7 +8,6 @@ import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -23,16 +23,7 @@ import static bangbang.gourmet.common.domain.SocialProvider.*;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
-    @Value("${kakao.client.id}")
-    private String clientId;
-
-    @Value("${kakao.client.secret}")
-    private String clientSecret;
-
-    @Value("${kakao.client.redirect-uri}")
-    private String redirectUri;
-
+    private final KakaoProperties kakaoProperties;
     private final UserRepository userRepository;
 
     public KakaoTokenResponse getKakaoToken(String code){
@@ -46,9 +37,9 @@ public class UserService {
         return webClient.post()
             .uri("/oauth/token")
             .body(BodyInserters.fromFormData("grant_type", "authorization_code")
-                    .with("client_id", clientId) // REST API 키
-                    .with("client_secret", clientSecret)
-                    .with("redirect_uri", redirectUri)
+                    .with("client_id", kakaoProperties.id()) // REST API 키
+                    .with("client_secret", kakaoProperties.secret())
+                    .with("redirect_uri", kakaoProperties.redirectUri())
                     .with("code", code))
             .retrieve()
             .bodyToMono(KakaoTokenResponse.class)
