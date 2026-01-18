@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -51,6 +52,7 @@ public class UserService {
                 .block();
     }
 
+    @Transactional
     public LoginResponse loginOrSignup(KakaoUserInfo userInfo){
         User user = userRepository.findByEmailAndProvider(userInfo.getEmail(), KAKAO)
                 .orElseGet(() -> {
