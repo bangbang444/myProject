@@ -4,6 +4,7 @@ import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.user.controller.dto.KakaoTokenResponse;
 import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
+import bangbang.gourmet.user.controller.dto.LoginResponse;
 import bangbang.gourmet.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,10 @@ public class UserController {
 
     // TODO: 프론트엔드 생기면 바꿀 예정
     @GetMapping("/auth/kakao/callback")
-    public Response<String> signup(@RequestParam String code){
+    public Response<LoginResponse> signup(@RequestParam String code){
         KakaoTokenResponse tokens = userService.getKakaoToken(code);
         KakaoUserInfo userInfo = userService.getKakaoUser(tokens.accessToken());
 
-        return Response.success(SuccessCode.SUCCESS, "호출 성공");
+        return Response.success(SuccessCode.SUCCESS, userService.loginOrSignup(userInfo));
     }
 }
