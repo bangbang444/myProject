@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.Random;
 
 import static bangbang.gourmet.common.domain.Role.*;
 import static bangbang.gourmet.common.domain.SocialProvider.*;
@@ -25,10 +25,10 @@ public class UserService {
     public LoginResponse loginOrRegister(KakaoUserInfo userInfo){
         User user = userRepository.findByEmailAndProvider(userInfo.getEmail(), KAKAO)
                 .orElseGet(() -> {
-                    String tempNickname = UUID.randomUUID().toString().substring(0, 8);
+                    String nickname = generateUniqueNickname(userInfo.getNickname());
                     User newUser = User.builder()
                             .email(userInfo.getEmail())
-                            .nickname(tempNickname)
+                            .nickname(nickname)
                             .role(ROLE_USER)
                             .providerId(String.valueOf(userInfo.id()))
                             .provider(KAKAO)
@@ -38,5 +38,15 @@ public class UserService {
 
         // TODO: JWT 토큰 생성 로직
         return LoginResponse.of("token");
+    }
+
+    private String generateUniqueNickname(String baseNickname) {
+        String nickname = baseNickname;
+        Random random = new Random();
+
+        while (userRepository.existsByNickname(nickname)) {
+            nickname = baseNickname + random.nextInt(10000);
+        }
+        return nickname;
     }
 }
