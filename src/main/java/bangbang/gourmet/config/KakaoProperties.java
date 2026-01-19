@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record KakaoProperties(
         String id,
         String secret,
-        String redirectUri
+        String redirectUri,
+        String authUrl,
+        String apiUrl
 ) {
 }
