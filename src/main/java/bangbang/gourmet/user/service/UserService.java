@@ -1,5 +1,7 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.common.security.jwt.JwtTokenProvider;
+import bangbang.gourmet.common.security.jwt.dto.TokenPair;
 import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
 import bangbang.gourmet.user.controller.dto.LoginResponse;
 import bangbang.gourmet.user.entity.User;
@@ -19,6 +21,7 @@ import static bangbang.gourmet.common.domain.SocialProvider.*;
 @RequiredArgsConstructor
 public class UserService {
 
+    private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
 
     @Transactional
@@ -36,8 +39,9 @@ public class UserService {
                     return userRepository.save(newUser);
                 });
 
+        TokenPair tokenPair = tokenProvider.generateTokenPair(user.getEmail());
         // TODO: JWT 토큰 생성 로직
-        return LoginResponse.of("token");
+        return LoginResponse.of(tokenPair.accessToken());
     }
 
     private String generateUniqueNickname(String baseNickname) {
