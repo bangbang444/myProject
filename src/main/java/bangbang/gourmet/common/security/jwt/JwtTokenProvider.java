@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
+import static bangbang.gourmet.common.security.jwt.JwtConstants.*;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -22,12 +24,6 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
     private final RefreshTokenService refreshTokenService;
     private Key signingKey;
-    private static final String USER_EMAIL = "USER_EMAIL";
-    private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
-    private static final String REFRESH_TOKEN = "REFRESH_TOKEN";
-    public static final long DAYS_IN_MILLISECONDS = 24 * 60 * 60 * 1000L;
-    private static final int ACCESS_TOKEN_EXPIRATION_DAYS = 30;
-    private static final int REFRESH_TOKEN_EXPIRATION_DAYS = 60;
 
     @PostConstruct
     protected void init() {
@@ -65,7 +61,7 @@ public class JwtTokenProvider {
         return Jwts.claims()
                 .setSubject(ACCESS_TOKEN)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRATION_DAYS *  DAYS_IN_MILLISECONDS));
+                .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME));
     }
 
     private Claims getRefreshTokenClaims() {
@@ -73,7 +69,7 @@ public class JwtTokenProvider {
         return Jwts.claims()
                 .setSubject(REFRESH_TOKEN)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRATION_DAYS *  DAYS_IN_MILLISECONDS));
+                .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRE_TIME));
     }
 
     private String createToken(Claims claims) {

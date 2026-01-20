@@ -2,6 +2,7 @@ package bangbang.gourmet.user.controller;
 
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
+import bangbang.gourmet.common.security.jwt.JwtConstants;
 import bangbang.gourmet.user.controller.dto.LoginResponse;
 import bangbang.gourmet.user.service.UserAuthService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import static bangbang.gourmet.common.security.jwt.JwtConstants.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,7 +36,7 @@ public class UserController {
                 .httpOnly(true)           // JavaScript로 접근 불가 (XSS 방지)
                 .secure(true)             // HTTPS에서만 전송,
                 .sameSite("Strict")       // CSRF 방지
-                .maxAge(60 * 24 * 60 * 60)  // 60일 (초 단위)
+                .maxAge(REFRESH_TOKEN_EXPIRE_TIME_SECONDS)  // 60일 (초 단위)
                 .path("/")                // 모든 경로에서 전송
                 .build();
 

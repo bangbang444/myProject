@@ -9,6 +9,8 @@ import org.springframework.data.redis.core.index.Indexed;
 
 import java.time.LocalDateTime;
 
+import static bangbang.gourmet.common.security.jwt.JwtConstants.*;
+
 /**
  * Redis에 저장되는 리프레시 토큰 엔티티
  * User ID를 key로 사용하여 사용자당 하나의 토큰만 유지
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-@RedisHash(value = "refresh_token", timeToLive = 60 * 24 * 60 * 60) // 60일 (초 단위)
+@RedisHash(value = "refresh_token", timeToLive = REFRESH_TOKEN_EXPIRE_TIME_SECONDS) // 14일 (초 단위)
 public class RefreshToken {
 
     /**
