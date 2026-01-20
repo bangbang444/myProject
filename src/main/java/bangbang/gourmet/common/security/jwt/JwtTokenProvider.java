@@ -45,29 +45,27 @@ public class JwtTokenProvider {
     }
 
     private String createAccessToken(String email) {
-        Claims claims = getAccessTokenClaims();
-        claims.put(USER_EMAIL, email);
+        Claims claims = getAccessTokenClaims(email);
         return createToken(claims);
     }
 
     private String createRefreshToken(String email) {
-        Claims claims = getRefreshTokenClaims();
-        claims.put(USER_EMAIL, email);
+        Claims claims = getRefreshTokenClaims(email);
         return createToken(claims);
     }
 
-    private Claims getAccessTokenClaims(){
+    private Claims getAccessTokenClaims(String email){
         Date now = new Date();
         return Jwts.claims()
-                .setSubject(ACCESS_TOKEN)
+                .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME));
     }
 
-    private Claims getRefreshTokenClaims() {
+    private Claims getRefreshTokenClaims(String email) {
         Date now = new Date();
         return Jwts.claims()
-                .setSubject(REFRESH_TOKEN)
+                .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRE_TIME));
     }
