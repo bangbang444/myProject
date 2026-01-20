@@ -39,9 +39,9 @@ public class UserService {
                     return userRepository.save(newUser);
                 });
 
-        TokenPair tokenPair = tokenProvider.generateTokenPair(user.getEmail());
-        // TODO: JWT 토큰 생성 로직
-        return LoginResponse.of(tokenPair.accessToken());
+        TokenPair tokenPair = tokenProvider.generateTokenPair(user.getId(), user.getEmail());
+
+        return LoginResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
     }
 
     private String generateUniqueNickname(String baseNickname) {

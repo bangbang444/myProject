@@ -1,9 +1,10 @@
 package bangbang.gourmet.user.controller.dto;
 
 public record LoginResponse(
-        String accessToken
+        String accessToken,
+        String refreshToken
 ) {
-    public static LoginResponse of(String token) {
-        return new LoginResponse(token);
+    public static LoginResponse of(String accessToken, String refreshToken) {
+        return new LoginResponse(accessToken, refreshToken);
     }
 }

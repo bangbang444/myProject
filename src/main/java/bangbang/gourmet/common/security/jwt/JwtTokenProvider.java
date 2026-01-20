@@ -1,6 +1,7 @@
 package bangbang.gourmet.common.security.jwt;
 
 import bangbang.gourmet.common.security.jwt.dto.TokenPair;
+import bangbang.gourmet.common.security.jwt.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
@@ -19,6 +20,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
+    private final RefreshTokenService refreshTokenService;
     private Key signingKey;
     private static final String USER_EMAIL = "USER_EMAIL";
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
@@ -33,11 +35,16 @@ public class JwtTokenProvider {
         signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public TokenPair generateTokenPair(String email) {
-        // TODO: 레디스에 리프레시 토큰 제거(id)
+    public TokenPair generateTokenPair(Long userId, String email) {
+        // 기존 토큰 삭제 (재로그인 시)
+        refreshTokenService.deleteRefreshToken(userId);
+
         String accessToken = createAccessToken(email);
         String refreshToken = createRefreshToken(email);
-        // TODO: 레디스에 리프레시 토큰 저장(id, refreshToken)
+
+        // Redis에 리프레시 토큰 저장
+        refreshTokenService.saveRefreshToken(userId, email, refreshToken);
+
         return new TokenPair(accessToken, refreshToken);
     }
 
