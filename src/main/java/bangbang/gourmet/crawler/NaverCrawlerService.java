@@ -1,6 +1,5 @@
-package bangbang.gourmet.restaurant.service;
+package bangbang.gourmet.crawler;
 
-import bangbang.gourmet.restaurant.dto.RestaurantCrawledDto;
 import bangbang.gourmet.restaurant.entity.Category;
 import bangbang.gourmet.restaurant.entity.OpeningHour;
 import bangbang.gourmet.restaurant.entity.Restaurant;
@@ -19,7 +18,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RestaurantService {
+public class NaverCrawlerService {
 
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;

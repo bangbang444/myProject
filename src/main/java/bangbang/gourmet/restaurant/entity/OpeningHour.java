@@ -1,6 +1,6 @@
 package bangbang.gourmet.restaurant.entity;
 
-import bangbang.gourmet.restaurant.dto.RestaurantCrawledDto;
+import bangbang.gourmet.crawler.RestaurantCrawledDto;
 import jakarta.persistence.*;
 import lombok.*;
 

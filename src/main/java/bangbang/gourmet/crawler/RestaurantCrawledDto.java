@@ -1,7 +1,5 @@
-package bangbang.gourmet.restaurant.dto;
+package bangbang.gourmet.crawler;
 
-import bangbang.gourmet.restaurant.entity.OpeningHour;
-import bangbang.gourmet.restaurant.entity.Restaurant;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,6 +14,8 @@ public class RestaurantCrawledDto {
     private double latitude;
     private double longitude;
     private List<OpeningHourDto> openingHours;
+
+
 
     @Getter @Builder
     public static class OpeningHourDto {

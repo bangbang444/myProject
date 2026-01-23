@@ -39,7 +39,7 @@ public class NaverMapConstants {
 
         public static final Pattern X_COORD = Pattern.compile("\"x\":\"(.*?)\"");
         public static final Pattern Y_COORD = Pattern.compile("\"y\":\"(.*?)\"");
-        public static final Pattern timePattern = Pattern.compile("\\d{2}:\\d{2}");
+        public static final Pattern TIME_PATTERN = Pattern.compile("\\d{2}:\\d{2}");
     }
 
     public static final class State {
