@@ -40,11 +40,6 @@ public class Restaurant extends BaseEntity {
     @Builder.Default
     private List<OpeningHour> openingHours = new ArrayList<>();
 
-    // Restaurant.java 내부
-    public void syncCategories(List<RestaurantCategory> newCategories) {
-        this.restaurantCategories.clear(); // 기존 연결 모두 제거
-        this.restaurantCategories.addAll(newCategories); // 새로운 연결 추가
-    }
     public void updateInfo(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
