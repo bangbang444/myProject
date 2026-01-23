@@ -14,18 +14,22 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static bangbang.gourmet.crawler.NaverMapConstants.Common.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Search.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.State.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Detail.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NaverCrawler {
-
-    public static final String SEARCH_URL = "https://map.naver.com/p/search/강남역 맛집";
     private final RestaurantService restaurantService;
 
     public void crawl() {
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                    .setHeadless(false)
+                    .setHeadless(true)
                     .setSlowMo(150));
 
             int currentPage = 1;
@@ -41,27 +45,27 @@ public class NaverCrawler {
                     // 이 좌표가 떠야 지도가 완전히 로드되고 클릭 이벤트가 활성화됩니다.
                     try {
                         log.info("지도가 완전히 로드될 때까지 대기 중...");
-                        page.waitForURL(url -> url.contains("?c="), new Page.WaitForURLOptions().setTimeout(15000));
+                        page.waitForURL(url -> url.contains(LOAD_INDICATOR), new Page.WaitForURLOptions().setTimeout(15000));
                     } catch (Exception e) {
                         log.warn("좌표 로딩 대기 중 타임아웃이 발생했으나 계속 진행합니다.");
                     }
 
                     // 3. 검색 결과 프레임 정의 및 첫 번째 식당 대기
-                    FrameLocator searchFrame = page.frameLocator("#searchIframe");
+                    FrameLocator searchFrame = page.frameLocator(SEARCH_IFRAME);
 
                     if(currentPage > 1){
                         boolean pageFound = false;
                         // 목표 페이지로 이동
                         while(!pageFound){
                             // 다음 숫자 버튼(currentPage + 1)을 먼저 찾고, 없으면 [다음] 화살표를 찾습니다.
-                            Locator nextNumBtn = searchFrame.locator("a.mBN2s").filter(new Locator.FilterOptions().setHasText(String.valueOf(currentPage)));
+                            Locator nextNumBtn = searchFrame.locator(PAGE_NUMBER_SELECTOR).filter(new Locator.FilterOptions().setHasText(String.valueOf(currentPage)));
                             if(nextNumBtn.isVisible()){
                                 nextNumBtn.click();
                                 page.waitForTimeout(3000); // 페이지 전환 대기
                                 pageFound=true;
                             }else{
-                                Locator nextArrowBtn = searchFrame.locator("a.eUTV2").filter(new Locator.FilterOptions().setHas(searchFrame.locator("span:has-text('다음페이지')")));
-                                if(nextArrowBtn.isVisible() && !"true".equals(nextArrowBtn.getAttribute("aria-disabled"))){
+                                Locator nextArrowBtn = searchFrame.locator(NEXT_PAGE_ARROW_SELECTOR).filter(new Locator.FilterOptions().setHas(searchFrame.locator("span:has-text('" + NEXT_PAGE_TEXT + "')")));
+                                if(nextArrowBtn.isVisible() && !TRUE.equals(nextArrowBtn.getAttribute(ARIA_DISABLED))){
                                     nextArrowBtn.click();
                                     page.waitForTimeout(3000);
                                 }else{
@@ -74,12 +78,12 @@ public class NaverCrawler {
                     if(!hasNextPage) continue;
 
                     // 요소가 실제로 화면에 나타날 때까지 대기
-                    searchFrame.locator("a.place_bluelink").
+                    searchFrame.locator(RESTAURANT_ITEM_LINK).
                             first().waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
 
                     int processedCount = 0; // 지금까지 완료한 식당 수
                     while (true) {
-                        Locator restaurantLinks = searchFrame.locator("a.place_bluelink");
+                        Locator restaurantLinks = searchFrame.locator(RESTAURANT_ITEM_LINK);
                         int currentTotal = restaurantLinks.count();
 
                         if (processedCount >= currentTotal) {
@@ -90,7 +94,7 @@ public class NaverCrawler {
                             page.waitForTimeout(1500); // 데이터 로드 대기
 
                             // 스크롤 후에도 개수가 그대로라면 이 페이지는 진짜 끝! (혹은 다음 페이지 버튼 필요)
-                            if (searchFrame.locator("a.place_bluelink").count() == currentTotal) {
+                            if (searchFrame.locator(RESTAURANT_ITEM_LINK).count() == currentTotal) {
                                 log.info("더 이상 추가되는 식당이 없습니다. 현재 페이지 수집 종료.");
                                 break;
                             }
@@ -106,14 +110,14 @@ public class NaverCrawler {
                             target.click();
 
                             // 상세 페이지 iframe 대기
-                            FrameLocator detailFrame = page.frameLocator("#entryIframe");
+                            FrameLocator detailFrame = page.frameLocator(ENTRY_IFRAME_SELECTOR);
 
                             // 식당 이름이 나타날 때까지 대기 (데이터 로딩 확인)
-                            detailFrame.locator("#_title span.GHAhO").waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                            detailFrame.locator(TITLE_SELECTOR).waitFor(new Locator.WaitForOptions().setTimeout(5000));
 
-                            String title = detailFrame.locator("#_title span.GHAhO").innerText();
-                            String category = detailFrame.locator("#_title span.lnJFt").innerText();
-                            String address = detailFrame.locator("span.pz7wy").innerText(); // LDgIH
+                            String title = detailFrame.locator(TITLE_SELECTOR).innerText();
+                            String category = detailFrame.locator(CATEGORY_SELECTOR).innerText();
+                            String address = detailFrame.locator(ADDRESS_SELECTOR).innerText(); // LDgIH
                             // 콤마로 분리하고 공백 제거하여 리스트화
                             List<String> categoryList = Arrays.stream(category.split(","))
                                     .map(String::trim)
@@ -124,20 +128,20 @@ public class NaverCrawler {
 
                             // 2. 실제 Frame 객체 획득 (안전한 방식)
                             Frame entryFrame = page.frames().stream()
-                                    .filter(f -> "entryIframe".equals(f.name()) || f.url().contains("entryIframe"))
+                                    .filter(f -> ENTRY_IFRAME.equals(f.name()) || f.url().contains(ENTRY_IFRAME))
                                     .findFirst()
                                     .orElse(null);
 
-                            String x = "0.0";
-                            String y = "0.0";
+                            String x = DEFAULT_COORD;
+                            String y = DEFAULT_COORD;
                             if (entryFrame != null) {
                                 // 3. 자바스크립트 실행하여 JSON 데이터 추출
                                 String apolloStateJson = (String) entryFrame.evaluate("() => JSON.stringify(window.__APOLLO_STATE__)");
 
-                                if (apolloStateJson != null && !apolloStateJson.equals("undefined")) {
+                                if (apolloStateJson != null && !apolloStateJson.equals(UNDEFINED)) {
                                     // 정규식으로 x(경도), y(위도) 추출
-                                    x = extractCoordinate(apolloStateJson, "\"x\":\"(.*?)\"");
-                                    y = extractCoordinate(apolloStateJson, "\"y\":\"(.*?)\"");
+                                    x = extractCoordinate(apolloStateJson, X_COORD);
+                                    y = extractCoordinate(apolloStateJson, Y_COORD);
 
                                     log.info("좌표 데이터 획득 성공 -> x: {}, y: {}", x, y);
                                 }
@@ -146,21 +150,21 @@ public class NaverCrawler {
                             }
 
                             // 전화번호는 없을 수도 있으니 체크
-                            String phoneNumber = "번호없음";
-                            if (detailFrame.locator("span.xlx7Q").isVisible()) {
-                                phoneNumber = detailFrame.locator("span.xlx7Q").innerText();
+                            String phoneNumber = NO_PHONE_NUMBER;
+                            if (detailFrame.locator(PHONE_NUMBER_SELECTOR).isVisible()) {
+                                phoneNumber = detailFrame.locator(PHONE_NUMBER_SELECTOR).innerText();
                             }
 
                             log.info("결과: {} / {} / {}", title, category, address);
-                            Locator expandButton = detailFrame.locator("a[role='button'].gKP9i");
+                            Locator expandButton = detailFrame.locator(OPENING_HOUR_EXPAND_BTN_SELECTOR);
 
                             // 2. aria-expanded 상태를 체크하여 닫혀있을 때만 클릭
-                            if ("false".equals(expandButton.getAttribute("aria-expanded"))) {
+                            if (FALSE.equals(expandButton.getAttribute(ARIA_EXPANDED))) {
                                 expandButton.click();
                                 log.info("영업시간 상세 보기 버튼을 클릭했습니다.");
                             }
-                            Locator days = detailFrame.locator("span.i8cJw");
-                            Locator times = detailFrame.locator("div.H3ua4");
+                            Locator days = detailFrame.locator(DAY_SELECTOR);
+                            Locator times = detailFrame.locator(TIMES_SELECTOR);
 
                             int dayCount = days.count();
                             int timeCount = times.count();
@@ -180,8 +184,6 @@ public class NaverCrawler {
                                     // 3. 줄바꿈(\n)을 가독성 좋게 " | "로 변환
                                     if (timeText != null) {
                                         // 1. 시간 패턴 추출 로직
-                                        Pattern timePattern = Pattern.compile("\\d{2}:\\d{2}");
-
                                         // 줄 단위나 섹션 단위로 나누어 분석하는 것이 더 정확합니다.
                                         String[] lines = timeText.split("\n");
 
@@ -199,9 +201,9 @@ public class NaverCrawler {
 
                                             if (timesInLine.isEmpty()) continue;
 
-                                            if (line.contains("브레이크타임")) {
+                                            if (line.contains(BREAK_TIME_LABEL)) {
                                                 breakTime = String.join(" - ", timesInLine);
-                                            } else if (line.contains("라스트오더")) {
+                                            } else if (line.contains(LAST_ORDER_LABEL)) {
                                                 // "라스트오더: 21:30" 형태를 유지하며 추가
                                                 if (!lastOrders.isEmpty()) lastOrders += " | ";
                                                 lastOrders += String.join(", ", timesInLine);
@@ -261,9 +263,9 @@ public class NaverCrawler {
                     } // 한 페이지 순회 완료 (while)
 
                     // 다음 페이지 존재 여부 확인 및 정보 업데이트
-                    Locator nextNumBtn = searchFrame.locator("a.mBN2s").filter(new Locator.FilterOptions().setHasText(String.valueOf(currentPage + 1)));
-                    Locator nextArrowBtn = searchFrame.locator("a.eUTV2").filter(new Locator.FilterOptions().setHas(searchFrame.locator("span:has-text('다음페이지')")));
-                    if(nextNumBtn.isVisible() || (nextArrowBtn.isVisible() && !"true".equals(nextArrowBtn.getAttribute("aria-disabled")))){
+                    Locator nextNumBtn = searchFrame.locator(PAGE_NUMBER_SELECTOR).filter(new Locator.FilterOptions().setHasText(String.valueOf(currentPage + 1)));
+                    Locator nextArrowBtn = searchFrame.locator(NEXT_PAGE_ARROW_SELECTOR).filter(new Locator.FilterOptions().setHas(searchFrame.locator("span:has-text('" + NEXT_PAGE_TEXT + "')")));
+                    if(nextNumBtn.isVisible() || (nextArrowBtn.isVisible() && !TRUE.equals(nextArrowBtn.getAttribute(ARIA_DISABLED)))){
                         currentPage++;
                     }else{
                         log.info("더 이상 이동할 페이지가 없습니다. 전체 수집 종료!");
@@ -279,20 +281,19 @@ public class NaverCrawler {
 
     private static BrowserContext createNewContext(Browser browser) {
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"));
+                .setUserAgent(USER_AGENT));
         return context;
     }
 
     /**
      * JSON 문자열에서 정규표현식을 이용해 좌표값을 추출합니다.
      */
-    private String extractCoordinate(String json, String regex) {
-        if (json == null) return "0.0";
-        Pattern pattern = Pattern.compile(regex);
+    private String extractCoordinate(String json, Pattern pattern) {
+        if (json == null) return DEFAULT_COORD;
         Matcher matcher = pattern.matcher(json);
         if (matcher.find()) {
             return matcher.group(1);
         }
-        return "0.0";
+        return DEFAULT_COORD;
     }
 }
