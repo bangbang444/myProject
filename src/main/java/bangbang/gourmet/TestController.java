@@ -5,7 +5,6 @@ import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.crawler.NaverCrawler;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
