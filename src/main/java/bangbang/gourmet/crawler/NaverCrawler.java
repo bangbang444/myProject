@@ -14,14 +14,16 @@ import java.util.regex.Pattern;
 
 import static bangbang.gourmet.crawler.NaverMapConstants.Common.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Search.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Menu.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.State.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Detail.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
 
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NaverCrawler { // TODO: 고정된 시간 대기 개선
+public class NaverCrawler {
     private final NaverCrawlerService naverCrawlerService;
 
     public void crawlAll(List<String> keywords) {
@@ -171,23 +173,23 @@ public class NaverCrawler { // TODO: 고정된 시간 대기 개선
             // 메뉴 추출
             List<RestaurantCrawledDto.MenuDto> menus = new ArrayList<>();
             try{
-                Locator menuTab = detailFrame.locator("a._tab-menu:has-text('메뉴')");
+                Locator menuTab = detailFrame.locator(MENU_TAB_BTN);
                 if(menuTab.isVisible()){
                     menuTab.click();
                     //  메뉴 리스트 나올 때까지 대기
-                    detailFrame.locator("li.E2jtL").first().waitFor();
+                    detailFrame.locator(MENU_ITEM_SELECTOR).first().waitFor();
                 }
                 // 메뉴 이름과 가격 추출
-                Locator menuItems = detailFrame.locator("li.E2jtL");
+                Locator menuItems = detailFrame.locator(MENU_ITEM_SELECTOR);
                 int count = menuItems.count();
 
                 for (int i = 0; i < count; i++) { // 너무 많으면 상위 10개만
                     Locator item = menuItems.nth(i);
 
-                    String name = item.locator(".lPzHi").isVisible()
-                            ? item.locator(".lPzHi").innerText() : "이름 없음";
-                    String price = item.locator(".GXS1X").isVisible()
-                            ? item.locator(".GXS1X").innerText() : "가격 변동";
+                    String name = item.locator(MENU_NAME_SELECTOR).isVisible()
+                            ? item.locator(MENU_NAME_SELECTOR).innerText() : DEFAULT_NAME;
+                    String price = item.locator(MENU_PRICE_SELECTOR).isVisible()
+                            ? item.locator(MENU_PRICE_SELECTOR).innerText() : DEFAULT_PRICE;
                     menus.add(RestaurantCrawledDto.MenuDto.builder()
                                     .name(name)
                                     .price(price)
