@@ -1,13 +1,7 @@
 package bangbang.gourmet.crawler;
 
-import bangbang.gourmet.restaurant.entity.Category;
-import bangbang.gourmet.restaurant.entity.OpeningHour;
-import bangbang.gourmet.restaurant.entity.Restaurant;
-import bangbang.gourmet.restaurant.entity.RestaurantCategory;
-import bangbang.gourmet.restaurant.repository.CategoryRepository;
-import bangbang.gourmet.restaurant.repository.OpeningHourRepository;
-import bangbang.gourmet.restaurant.repository.RestaurantCategoryRepository;
-import bangbang.gourmet.restaurant.repository.RestaurantRepository;
+import bangbang.gourmet.restaurant.entity.*;
+import bangbang.gourmet.restaurant.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +18,7 @@ public class NaverCrawlerService {
     private final CategoryRepository categoryRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final OpeningHourRepository openingHourRepository;
+    private final MenuRepository menuRepository;
 
     @Transactional
     public void saveCrawledData(RestaurantCrawledDto dto) {
@@ -72,7 +67,26 @@ public class NaverCrawlerService {
             openingHourRepository.saveAll(newHours);
         }
 
-        // 5. 최종 저장 (영업시간은 CascadeType.ALL 설정으로 자동 저장됨)
+        // 5. 메뉴처리
+        menuRepository.deleteByRestaurant(restaurant);
+        menuRepository.flush();
+
+        if (restaurant.getMenus() != null) {
+            restaurant.getMenus().clear();
+        }
+
+        if (dto.getMenus() != null) {
+            List<Menu> newMenus = dto.getMenus().stream()
+                    .map(m -> Menu.builder()
+                            .name(m.getName())
+                            .price(m.getPrice())
+                            .restaurant(restaurant)
+                            .build())
+                    .toList();
+            menuRepository.saveAll(newMenus);
+        }
+
+        // 6. 최종 저장 (영업시간은 CascadeType.ALL 설정으로 자동 저장됨)
         restaurantRepository.save(restaurant); // 명시적인 save() 호출은 생략 가능 (Transaction 종료 시 자동 반영)
         log.info("성공적으로 저장/업데이트 되었습니다: {}", restaurant.getRestaurantName());
     }
