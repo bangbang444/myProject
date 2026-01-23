@@ -1,0 +1,28 @@
+package bangbang.gourmet.restaurant.dto;
+
+import bangbang.gourmet.restaurant.entity.OpeningHour;
+import bangbang.gourmet.restaurant.entity.Restaurant;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.List;
+
+@Getter @Builder
+public class RestaurantCrawledDto {
+    private String name;
+    private List<String> categories;
+    private String address;
+    private String phoneNumber;
+    private double latitude;
+    private double longitude;
+    private List<OpeningHourDto> openingHours;
+
+    @Getter @Builder
+    public static class OpeningHourDto {
+        private String dayOfWeek;
+        private String startTime;
+        private String endTime;
+        private String breakTime;
+        private String lastOrder;
+    }
+}
