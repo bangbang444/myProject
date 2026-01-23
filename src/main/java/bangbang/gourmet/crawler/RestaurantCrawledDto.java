@@ -14,6 +14,7 @@ public class RestaurantCrawledDto {
     private double latitude;
     private double longitude;
     private List<OpeningHourDto> openingHours;
+    private List<MenuDto> menus;
 
 
 
@@ -24,5 +25,11 @@ public class RestaurantCrawledDto {
         private String endTime;
         private String breakTime;
         private String lastOrder;
+    }
+
+    @Getter @Builder
+    public static class MenuDto {
+        private String name;
+        private String price;
     }
 }
