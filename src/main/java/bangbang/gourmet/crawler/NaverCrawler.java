@@ -21,7 +21,7 @@ import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NaverCrawler {
+public class NaverCrawler { // TODO: 고정된 시간 대기 개선
     private final NaverCrawlerService naverCrawlerService;
 
     public void crawlAll(List<String> keywords) {
