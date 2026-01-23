@@ -13,8 +13,8 @@ public class AsyncConfig {
     @Bean(name = "crawlTaskExecutor")
     public Executor crawlTaskExecutor(){
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);        // 기본적으로 유지할 스레드 수
-        executor.setMaxPoolSize(5);         // 최대 스레드 수
+        executor.setCorePoolSize(1);        // 기본적으로 유지할 스레드 수
+        executor.setMaxPoolSize(1);         // 최대 스레드 수
         executor.setQueueCapacity(10);      // 대기 큐 크기
         executor.setThreadNamePrefix("CrawlThread-");
         executor.setWaitForTasksToCompleteOnShutdown(false); // 서버 꺼질 때 작업 안 기다리고 즉시 종료
