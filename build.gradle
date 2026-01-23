@@ -50,6 +50,11 @@ dependencies {
 	// Redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// playwright
+	implementation 'com.microsoft.playwright:playwright:1.40.0'
+
+	// mysql
+	implementation 'com.mysql:mysql-connector-j:8.3.0'
 }
 
 tasks.named('test') {

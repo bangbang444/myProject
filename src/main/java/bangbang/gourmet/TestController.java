@@ -3,12 +3,18 @@ package bangbang.gourmet;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
-import org.springframework.http.ResponseEntity;
+import bangbang.gourmet.crawler.NaverCrawlSyncService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
+@RequiredArgsConstructor
 public class TestController {
+
+    private final NaverCrawlSyncService naverCrawlSyncService;
 
     @GetMapping("/success")
     public Response<String> success(){
@@ -18,5 +24,11 @@ public class TestController {
     @GetMapping("/error")
     public Response<String> error(){
         return Response.error(ErrorCode.INTERNAL_SERVER_ERROR, "error");
+    }
+
+    @GetMapping("/crawl")
+    public Response<String> crawl(){
+        naverCrawlSyncService.startAsyncCrawl();
+        return Response.success(SuccessCode.SUCCESS, "crawl");
     }
 }
