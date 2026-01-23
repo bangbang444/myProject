@@ -168,6 +168,36 @@ public class NaverCrawler { // TODO: 고정된 시간 대기 개선
 
             List<RestaurantCrawledDto.OpeningHourDto> openingHourDtos = parseOpeningHours(detailFrame);
 
+            // 메뉴 추출
+            List<RestaurantCrawledDto.MenuDto> menus = new ArrayList<>();
+            try{
+                Locator menuTab = detailFrame.locator("a._tab-menu:has-text('메뉴')");
+                if(menuTab.isVisible()){
+                    menuTab.click();
+                    //  메뉴 리스트 나올 때까지 대기
+                    detailFrame.locator("li.E2jtL").first().waitFor();
+                }
+                // 메뉴 이름과 가격 추출
+                Locator menuItems = detailFrame.locator("li.E2jtL");
+                int count = menuItems.count();
+
+                for (int i = 0; i < count; i++) { // 너무 많으면 상위 10개만
+                    Locator item = menuItems.nth(i);
+
+                    String name = item.locator(".lPzHi").isVisible()
+                            ? item.locator(".lPzHi").innerText() : "이름 없음";
+                    String price = item.locator(".GXS1X").isVisible()
+                            ? item.locator(".GXS1X").innerText() : "가격 변동";
+                    menus.add(RestaurantCrawledDto.MenuDto.builder()
+                                    .name(name)
+                                    .price(price)
+                                    .build());
+                    log.info("수집 메뉴: {} - {}", name, price);
+                }
+            }catch(Exception e){
+                log.warn("메뉴 수집 중 건너뜀: {}", e.getMessage());
+            }
+
             RestaurantCrawledDto restaurantDto = RestaurantCrawledDto.builder()
                     .name(title)
                     .categories(categoryList)
@@ -176,6 +206,7 @@ public class NaverCrawler { // TODO: 고정된 시간 대기 개선
                     .longitude(Double.parseDouble(coords[0]))
                     .latitude(Double.parseDouble(coords[1]))
                     .openingHours(openingHourDtos)
+                    .menus(menus)
                     .build();
             naverCrawlerService.saveCrawledData(restaurantDto);
         }catch (Exception e){
