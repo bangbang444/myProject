@@ -6,7 +6,7 @@ public class NaverMapConstants {
     private NaverMapConstants(){} // 인스턴스화 방지
 
     public static final class Search {
-        public static final String SEARCH_URL = "https://map.naver.com/p/search/강남역 맛집";
+        public static final String SEARCH_URL = "https://map.naver.com/p/search/";
         public static final String SEARCH_IFRAME = "#searchIframe";
         public static final String RESTAURANT_ITEM_LINK = "a.place_bluelink";
         public static final String LOAD_INDICATOR = "?c=";

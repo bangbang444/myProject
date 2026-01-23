@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,41 +25,50 @@ import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
 public class NaverCrawler {
     private final NaverCrawlerService naverCrawlerService;
 
-    public void crawl() {
+    public void crawlAll(List<String> keywords) {
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                     .setHeadless(true)
                     .setSlowMo(150));
 
-            int currentPage = 1;
-            boolean hasNextPage = true;
-            while(hasNextPage) {
-                log.info(">>>> [{}페이지] 수집 시작 (새 세션 생성) <<<<", currentPage);
-                try(BrowserContext context = createNewContext(browser)){
-                    Page page = context.newPage();
-                    // 1. 페이지 초기화
-                    initSearchPage(page);
-                    // 2. 목표 페이지 이동
-                    FrameLocator searchFrame = page.frameLocator(SEARCH_IFRAME);
-                    hasNextPage = navigateToTargetPage(searchFrame, page, currentPage);
-                    if(!hasNextPage) continue;
-                    // 3. 식당 수집
-                    collectAllRestaurantsOnPage(page, searchFrame);
-                    // 4. 다음 페이지 존재 여부 확인 및 정보 업데이트
-                    hasNextPage = hasNextPageExists(searchFrame, currentPage);
-                    if(hasNextPage) currentPage++;
-                    else log.info("더 이상 이동할 페이지가 없습니다. 전체 수집 종료!");
-                }
+            for (String keyword : keywords) {
+                log.info("▶▶▶ [{}] 지역 수집을 시작합니다.", keyword);
+                singleCrawl(browser, keyword);
             }
+
             browser.close();
         } catch (Exception e) {
             log.error("크롤링 중 에러 발생: ", e);
         }
     }
 
-    private static void initSearchPage(Page page){
+    private void singleCrawl(Browser browser, String keyword) {
+        int currentPage = 1;
+        boolean hasNextPage = true;
+        while(hasNextPage) {
+            log.info(">>>> [{}페이지] 수집 시작 (새 세션 생성) <<<<", currentPage);
+            try(BrowserContext context = createNewContext(browser)){
+                Page page = context.newPage();
+                // 1. 페이지 초기화
+                initSearchPage(page, keyword);
+                // 2. 목표 페이지 이동
+                FrameLocator searchFrame = page.frameLocator(SEARCH_IFRAME);
+                hasNextPage = navigateToTargetPage(searchFrame, page, currentPage);
+                if(!hasNextPage) continue;
+                // 3. 식당 수집
+                collectAllRestaurantsOnPage(page, searchFrame);
+                // 4. 다음 페이지 존재 여부 확인 및 정보 업데이트
+                hasNextPage = hasNextPageExists(searchFrame, currentPage);
+                if(hasNextPage) currentPage++;
+                else log.info("더 이상 이동할 페이지가 없습니다. 전체 수집 종료!");
+            }
+        }
+    }
+
+    private static void initSearchPage(Page page, String keyword){
         log.info("1. 접속 시도");
-        page.navigate(SEARCH_URL);
+        String targetUrl = SEARCH_URL + keyword;
+        page.navigate(targetUrl);
 
         try {
             log.info("지도가 완전히 로드될 때까지 대기 중...");
