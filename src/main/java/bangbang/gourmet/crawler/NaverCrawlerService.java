@@ -86,7 +86,7 @@ public class NaverCrawlerService {
             menuRepository.saveAll(newMenus);
         }
 
-        // 6. 최종 저장 (영업시간은 CascadeType.ALL 설정으로 자동 저장됨)
+        // 6. 최종 저장
         restaurantRepository.save(restaurant); // 명시적인 save() 호출은 생략 가능 (Transaction 종료 시 자동 반영)
         log.info("성공적으로 저장/업데이트 되었습니다: {}", restaurant.getRestaurantName());
     }

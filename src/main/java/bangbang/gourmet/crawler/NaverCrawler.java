@@ -202,7 +202,7 @@ public class NaverCrawler {
             Locator menuItems = detailFrame.locator(MENU_ITEM_SELECTOR);
             int count = menuItems.count();
 
-            for (int i = 0; i < count; i++) { // 너무 많으면 상위 10개만
+            for (int i = 0; i < count; i++) {
                 Locator item = menuItems.nth(i);
 
                 String name = item.locator(MENU_NAME_SELECTOR).isVisible()
