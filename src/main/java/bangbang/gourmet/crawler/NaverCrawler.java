@@ -14,14 +14,16 @@ import java.util.regex.Pattern;
 
 import static bangbang.gourmet.crawler.NaverMapConstants.Common.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Search.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Menu.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.State.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Detail.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
 
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NaverCrawler { // TODO: 고정된 시간 대기 개선
+public class NaverCrawler {
     private final NaverCrawlerService naverCrawlerService;
 
     public void crawlAll(List<String> keywords) {
@@ -168,6 +170,9 @@ public class NaverCrawler { // TODO: 고정된 시간 대기 개선
 
             List<RestaurantCrawledDto.OpeningHourDto> openingHourDtos = parseOpeningHours(detailFrame);
 
+            // 메뉴 추출
+            List<RestaurantCrawledDto.MenuDto> menus = extractMenus(detailFrame);
+
             RestaurantCrawledDto restaurantDto = RestaurantCrawledDto.builder()
                     .name(title)
                     .categories(categoryList)
@@ -176,11 +181,44 @@ public class NaverCrawler { // TODO: 고정된 시간 대기 개선
                     .longitude(Double.parseDouble(coords[0]))
                     .latitude(Double.parseDouble(coords[1]))
                     .openingHours(openingHourDtos)
+                    .menus(menus)
                     .build();
             naverCrawlerService.saveCrawledData(restaurantDto);
         }catch (Exception e){
             log.error("{}번째 식당 처리 중 에러 발생: {}", index + 1, e.getMessage());
         }
+    }
+
+    private static List<RestaurantCrawledDto.MenuDto> extractMenus(FrameLocator detailFrame) {
+        List<RestaurantCrawledDto.MenuDto> menus = new ArrayList<>();
+        try{
+            Locator menuTab = detailFrame.locator(MENU_TAB_BTN);
+            if(menuTab.isVisible()){
+                menuTab.click();
+                //  메뉴 리스트 나올 때까지 대기
+                detailFrame.locator(MENU_ITEM_SELECTOR).first().waitFor();
+            }
+            // 메뉴 이름과 가격 추출
+            Locator menuItems = detailFrame.locator(MENU_ITEM_SELECTOR);
+            int count = menuItems.count();
+
+            for (int i = 0; i < count; i++) {
+                Locator item = menuItems.nth(i);
+
+                Locator nameLocator = item.locator(MENU_NAME_SELECTOR);
+                String name = nameLocator.isVisible() ? nameLocator.innerText() : DEFAULT_NAME;
+                Locator priceLocator = item.locator(MENU_PRICE_SELECTOR);
+                String price = priceLocator.isVisible() ? priceLocator.innerText() : DEFAULT_PRICE;
+                menus.add(RestaurantCrawledDto.MenuDto.builder()
+                                .name(name)
+                                .price(price)
+                                .build());
+                log.info("수집 메뉴: {} - {}", name, price);
+            }
+        }catch(Exception e){
+            log.warn("메뉴 수집 중 건너뜀: {}", e.getMessage());
+        }
+        return menus;
     }
 
     private static void ensureOpeningHoursExpanded(FrameLocator detailFrame) {

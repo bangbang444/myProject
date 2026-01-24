@@ -24,6 +24,15 @@ public class NaverMapConstants {
         public static final String TIMES_SELECTOR = "div.H3ua4";
     }
 
+    public static final class Menu {
+        public static final String MENU_TAB_BTN = "a._tab-menu:has-text('메뉴')";
+        public static final String MENU_ITEM_SELECTOR = "li.E2jtL";
+        public static final String MENU_NAME_SELECTOR = ".lPzHi";
+        public static final String MENU_PRICE_SELECTOR = ".GXS1X";
+        public static final String DEFAULT_NAME = "이름 없음";
+        public static final String DEFAULT_PRICE = "가격 변동";
+    }
+
     public static final class Pagination {
         public static final String PAGE_NUMBER_SELECTOR = "a.mBN2s";
         public static final String NEXT_PAGE_ARROW_SELECTOR = "a.eUTV2";

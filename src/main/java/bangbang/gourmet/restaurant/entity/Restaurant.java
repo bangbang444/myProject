@@ -40,6 +40,10 @@ public class Restaurant extends BaseEntity {
     @Builder.Default
     private List<OpeningHour> openingHours = new ArrayList<>();
 
+    @OneToMany(mappedBy = "restaurant")
+    @Builder.Default
+    private List<Menu> menus = new ArrayList<>();
+
     public void updateInfo(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
