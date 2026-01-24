@@ -71,9 +71,7 @@ public class NaverCrawlerService {
         menuRepository.deleteByRestaurant(restaurant);
         menuRepository.flush();
 
-        if (restaurant.getMenus() != null) {
-            restaurant.getMenus().clear();
-        }
+        restaurant.getMenus().clear();
 
         if (dto.getMenus() != null) {
             List<Menu> newMenus = dto.getMenus().stream()
