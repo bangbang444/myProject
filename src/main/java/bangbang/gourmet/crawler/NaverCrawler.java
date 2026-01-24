@@ -171,34 +171,7 @@ public class NaverCrawler {
             List<RestaurantCrawledDto.OpeningHourDto> openingHourDtos = parseOpeningHours(detailFrame);
 
             // 메뉴 추출
-            List<RestaurantCrawledDto.MenuDto> menus = new ArrayList<>();
-            try{
-                Locator menuTab = detailFrame.locator(MENU_TAB_BTN);
-                if(menuTab.isVisible()){
-                    menuTab.click();
-                    //  메뉴 리스트 나올 때까지 대기
-                    detailFrame.locator(MENU_ITEM_SELECTOR).first().waitFor();
-                }
-                // 메뉴 이름과 가격 추출
-                Locator menuItems = detailFrame.locator(MENU_ITEM_SELECTOR);
-                int count = menuItems.count();
-
-                for (int i = 0; i < count; i++) { // 너무 많으면 상위 10개만
-                    Locator item = menuItems.nth(i);
-
-                    String name = item.locator(MENU_NAME_SELECTOR).isVisible()
-                            ? item.locator(MENU_NAME_SELECTOR).innerText() : DEFAULT_NAME;
-                    String price = item.locator(MENU_PRICE_SELECTOR).isVisible()
-                            ? item.locator(MENU_PRICE_SELECTOR).innerText() : DEFAULT_PRICE;
-                    menus.add(RestaurantCrawledDto.MenuDto.builder()
-                                    .name(name)
-                                    .price(price)
-                                    .build());
-                    log.info("수집 메뉴: {} - {}", name, price);
-                }
-            }catch(Exception e){
-                log.warn("메뉴 수집 중 건너뜀: {}", e.getMessage());
-            }
+            List<RestaurantCrawledDto.MenuDto> menus = extractMenus(detailFrame);
 
             RestaurantCrawledDto restaurantDto = RestaurantCrawledDto.builder()
                     .name(title)
@@ -214,6 +187,38 @@ public class NaverCrawler {
         }catch (Exception e){
             log.error("{}번째 식당 처리 중 에러 발생: {}", index + 1, e.getMessage());
         }
+    }
+
+    private static List<RestaurantCrawledDto.MenuDto> extractMenus(FrameLocator detailFrame) {
+        List<RestaurantCrawledDto.MenuDto> menus = new ArrayList<>();
+        try{
+            Locator menuTab = detailFrame.locator(MENU_TAB_BTN);
+            if(menuTab.isVisible()){
+                menuTab.click();
+                //  메뉴 리스트 나올 때까지 대기
+                detailFrame.locator(MENU_ITEM_SELECTOR).first().waitFor();
+            }
+            // 메뉴 이름과 가격 추출
+            Locator menuItems = detailFrame.locator(MENU_ITEM_SELECTOR);
+            int count = menuItems.count();
+
+            for (int i = 0; i < count; i++) { // 너무 많으면 상위 10개만
+                Locator item = menuItems.nth(i);
+
+                String name = item.locator(MENU_NAME_SELECTOR).isVisible()
+                        ? item.locator(MENU_NAME_SELECTOR).innerText() : DEFAULT_NAME;
+                String price = item.locator(MENU_PRICE_SELECTOR).isVisible()
+                        ? item.locator(MENU_PRICE_SELECTOR).innerText() : DEFAULT_PRICE;
+                menus.add(RestaurantCrawledDto.MenuDto.builder()
+                                .name(name)
+                                .price(price)
+                                .build());
+                log.info("수집 메뉴: {} - {}", name, price);
+            }
+        }catch(Exception e){
+            log.warn("메뉴 수집 중 건너뜀: {}", e.getMessage());
+        }
+        return menus;
     }
 
     private static void ensureOpeningHoursExpanded(FrameLocator detailFrame) {
