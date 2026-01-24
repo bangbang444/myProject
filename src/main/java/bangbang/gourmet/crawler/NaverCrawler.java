@@ -205,10 +205,10 @@ public class NaverCrawler {
             for (int i = 0; i < count; i++) {
                 Locator item = menuItems.nth(i);
 
-                String name = item.locator(MENU_NAME_SELECTOR).isVisible()
-                        ? item.locator(MENU_NAME_SELECTOR).innerText() : DEFAULT_NAME;
-                String price = item.locator(MENU_PRICE_SELECTOR).isVisible()
-                        ? item.locator(MENU_PRICE_SELECTOR).innerText() : DEFAULT_PRICE;
+                Locator nameLocator = item.locator(MENU_NAME_SELECTOR);
+                String name = nameLocator.isVisible() ? nameLocator.innerText() : DEFAULT_NAME;
+                Locator priceLocator = item.locator(MENU_PRICE_SELECTOR);
+                String price = priceLocator.isVisible() ? priceLocator.innerText() : DEFAULT_PRICE;
                 menus.add(RestaurantCrawledDto.MenuDto.builder()
                                 .name(name)
                                 .price(price)
