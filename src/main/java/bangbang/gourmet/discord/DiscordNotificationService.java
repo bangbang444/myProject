@@ -28,7 +28,6 @@ public class DiscordNotificationService {
     @Async("discordExecutor")
     public void send5xxNotification(String errorMessage, String stackTrace, String requestInfo){
         try{
-            System.out.println(webhook5xxUrl);
             String message = create5xxMessage(errorMessage, stackTrace, requestInfo);
             sendToDiscordAsync(message, webhook5xxUrl, "🚨 서버 에러 발생 🚨");
         }catch (Exception e){
