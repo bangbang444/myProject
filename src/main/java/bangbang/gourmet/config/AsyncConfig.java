@@ -22,4 +22,17 @@ public class AsyncConfig {
         executor.initialize();
         return executor;
     }
+
+    @Bean(name = "discordExecutor")
+    public ThreadPoolTaskExecutor discordExecutor() {
+        ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(2); // 최소 스레드 수
+        ex.setMaxPoolSize(4); // 최대 스레드 수
+        ex.setQueueCapacity(100); // 큐 용량
+        ex.setThreadNamePrefix("discord-");
+        ex.setWaitForTasksToCompleteOnShutdown(true); // 종료시 대기
+        ex.setAwaitTerminationSeconds(5); // 최대 5초 기다림
+        ex.initialize();
+        return ex;
+    }
 }

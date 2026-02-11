@@ -37,8 +37,7 @@ out/
 .vscode/
 
 # 보안
-src/main/resources/*
-src/main/resources/application.properties
+/src/main/resources/application*.yml
 
 # AI Assistant Guide (Local Only)
 CLAUDE.md
