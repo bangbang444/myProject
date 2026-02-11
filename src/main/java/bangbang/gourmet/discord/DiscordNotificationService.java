@@ -57,10 +57,10 @@ public class DiscordNotificationService {
                 .append("\n");
 
         message.append("**에러 메시지:** ")
-                .append(nz(errorMessage, "Unknown Error"))
+                .append(defaultIfBlank(errorMessage, "Unknown Error"))
                 .append("\n");
 
-        if (nz(requestInfo, "").contains(" ")) {
+        if (defaultIfBlank(requestInfo, "").contains(" ")) {
             String[] parts = requestInfo.split(" ", 2);
             if (parts.length >= 2) {
                 String method = parts[0];
@@ -87,10 +87,10 @@ public class DiscordNotificationService {
                 .append("\n");
 
         message.append("**에러 메시지:** ")
-                .append(nz(errorMessage, "Unknown Error"))
+                .append(defaultIfBlank(errorMessage, "Unknown Error"))
                 .append("\n");
 
-        if (nz(requestInfo, "").contains(" ")) {
+        if (defaultIfBlank(requestInfo, "").contains(" ")) {
             String[] parts = requestInfo.split(" ", 2); // 최대 2개로 나눔
             if (parts.length >= 2) {
                 String method = parts[0];
@@ -123,5 +123,5 @@ public class DiscordNotificationService {
                 .subscribe(); // 비동기 실행 (first-and-forget)
     }
 
-    private static String nz(String v, String d) { return (v == null || v.isBlank()) ? d : v; }
+    private static String defaultIfBlank(String v, String d) { return (v == null || v.isBlank()) ? d : v; }
 }
