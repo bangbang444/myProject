@@ -27,7 +27,7 @@ public class RefreshTokenService {
      * @param refreshToken 리프레시 토큰 값
      */
     public void saveRefreshToken(Long userId, String email, String refreshToken) {
-        log.info("리프레시 토큰 저장 시작: userId={}, email={}", userId, email);
+        // log.info("리프레시 토큰 저장 시작: userId={}, email={}", userId, email);
 
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)

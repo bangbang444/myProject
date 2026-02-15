@@ -3,6 +3,7 @@ package bangbang.gourmet.user.controller;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.common.security.jwt.JwtConstants;
+import bangbang.gourmet.user.controller.dto.LoginRequest;
 import bangbang.gourmet.user.controller.dto.LoginResponse;
 import bangbang.gourmet.user.service.UserAuthService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,26 +11,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static bangbang.gourmet.common.security.jwt.JwtConstants.*;
 
+
 @RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
 
     private final UserAuthService userService;
 
-    // TODO: 프론트엔드 생기면 바꿀 예정
-    @GetMapping("/auth/kakao/callback")
+    @PostMapping("/auth/login")
     public Response<LoginResponse> kakaoLogin(
-            @RequestParam String code,
+            @RequestBody LoginRequest request,
             HttpServletResponse httpServletResponse
     ){
-        LoginResponse loginResponse = userService.loginWithKakao(code);
+        LoginResponse loginResponse = userService.loginWithKakao(request);
 
         // Refresh Token을 HttpOnly Cookie로 설정 (웹 브라우저용)
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", loginResponse.refreshToken())
