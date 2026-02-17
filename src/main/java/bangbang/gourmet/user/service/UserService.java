@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.common.domain.SocialProvider;
 import bangbang.gourmet.common.security.jwt.JwtTokenProvider;
 import bangbang.gourmet.common.security.jwt.dto.TokenPair;
 import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
@@ -25,8 +26,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public LoginResponse loginOrRegister(KakaoUserInfo userInfo){
-        User user = userRepository.findByEmailAndProvider(userInfo.getEmail(), KAKAO)
+    public LoginResponse socialLogin(KakaoUserInfo userInfo, SocialProvider provider) {
+        User user = userRepository.findByEmailAndProvider(userInfo.getEmail(), provider)
                 .orElseGet(() -> {
                     String nickname = generateUniqueNickname(userInfo.getNickname());
                     User newUser = User.builder()
@@ -39,8 +40,7 @@ public class UserService {
                     return userRepository.save(newUser);
                 });
 
-        TokenPair tokenPair = tokenProvider.generateTokenPair(user.getId(), user.getEmail());
-
+        TokenPair tokenPair = tokenProvider.generateTokenPair(user.getId(), provider);
         return LoginResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
     }
 
