@@ -1,5 +1,8 @@
 package bangbang.gourmet.social.service;
 
+import bangbang.gourmet.common.exception.model.BadRequestException;
+import bangbang.gourmet.common.exception.model.NotFoundException;
+import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.social.dto.FollowStatusResponse;
 import bangbang.gourmet.social.entity.Follow;
 import bangbang.gourmet.social.repository.FollowRepository;
@@ -11,22 +14,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public FollowStatusResponse toggleFollow(Long followerId, Long followingId){
         // 자기 자신 팔로우 방지
         if(followerId.equals(followingId)){
-
-        };
+            throw new BadRequestException(ErrorCode.CANNOT_FOLLOW_SELF);
+        }
 
         // 유저 존재 확인
         User follower = userRepository.findById(followerId)
-                .orElseThrow();
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
         User following = userRepository.findById(followingId)
-                .orElseThrow();
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
         // 토글
         if(followRepository.existsByFollowerAndFollowing(follower, following)){
@@ -40,6 +43,5 @@ public class FollowService {
             followRepository.save(follow);
             return new FollowStatusResponse(true);
         }
-
     }
 }
