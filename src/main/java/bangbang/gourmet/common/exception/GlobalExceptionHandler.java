@@ -1,5 +1,6 @@
 package bangbang.gourmet.common.exception;
 
+import bangbang.gourmet.common.exception.model.GourmetException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.discord.DiscordNotificationService;
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler {
         // 디스코드 전송 (아까 만든 서비스 호출)
         discordService.send5xxNotification(ex.getMessage(), sw.toString(), requestInfo);
 
-        return ResponseEntity.internalServerError().body(Response.error(ErrorCode.INTERNAL_SERVER_ERROR,"서버 내부 오류가 발생했습니다."));
+        return ResponseEntity.internalServerError().body(Response.error(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 
     // 올바르지 않은 경로(4xx 에러)
@@ -54,7 +55,7 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest()
-                .body(Response.error(ErrorCode.NOT_FOUND, ex.getMessage()));
+                .body(Response.error(ErrorCode.BAD_REQUEST));
     }
 
     private String getClientIP(HttpServletRequest request) {
@@ -66,5 +67,31 @@ public class GlobalExceptionHandler {
             ip = request.getRemoteAddr(); // 마지막 수단
         }
         return ip;
+    }
+
+    // GourmetException -> 4xx에러
+    @ExceptionHandler(GourmetException.class)
+    public ResponseEntity<Response<Void>> handleGourmetException(GourmetException ex, HttpServletRequest request) {
+        log.warn("=== GourmetException 발생 ===");
+        log.warn("에러 타입: {}", ex.getClass().getSimpleName());
+        log.warn("에러 메시지: {}", ex.getMessage());
+        log.warn("에러 코드: {}", ex.getErrorCode());
+
+        // 요청 정보 수집
+        String requestInfo = String.format("%s %s",
+                request.getMethod(),
+                request.getRequestURI());
+
+        // 클라이언트 정보 수집
+        String clientInfo = String.format("IP: %s, User-Agent: %s",
+                getClientIP(request),
+                request.getHeader("User-Agent"));
+
+        // 400대 에러 Discord 알림 발송
+        discordService.send4xxNotification(ex.getClass().getSimpleName() + ": " + ex.getMessage(), requestInfo, clientInfo);
+
+        return ResponseEntity
+                .status(ex.getErrorCode().getCode())
+                .body(Response.error(ex.getErrorCode()));
     }
 }
