@@ -23,15 +23,13 @@ public class RefreshTokenService {
     /**
      * 리프레시 토큰 저장 (기존 토큰 있으면 덮어쓰기)
      * @param userId 사용자 ID (Redis Key)
-     * @param email 사용자 이메일
      * @param refreshToken 리프레시 토큰 값
      */
-    public void saveRefreshToken(Long userId, String email, String refreshToken) {
-        // log.info("리프레시 토큰 저장 시작: userId={}, email={}", userId, email);
+    public void saveRefreshToken(Long userId, String refreshToken) {
+        // log.info("리프레시 토큰 저장 시작: userId={});
 
         RefreshToken token = RefreshToken.builder()
                 .userId(userId)
-                .email(email)
                 .token(refreshToken)
                 .createdAt(LocalDateTime.now())
                 .build();

@@ -36,11 +36,6 @@ public class RefreshToken {
     private String token;
 
     /**
-     * 사용자 이메일 (추가 검증 및 로깅용)
-     */
-    private String email;
-
-    /**
      * 토큰 생성 시간 (디버깅 및 추적용)
      */
     private LocalDateTime createdAt;
