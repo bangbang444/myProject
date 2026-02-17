@@ -41,6 +41,7 @@ public class UserService {
                 });
 
         TokenPair tokenPair = tokenProvider.generateTokenPair(user.getId(), provider);
+        //log.info("token: {}",tokenPair.accessToken());
         return LoginResponse.of(tokenPair.accessToken(), tokenPair.refreshToken());
     }
 
