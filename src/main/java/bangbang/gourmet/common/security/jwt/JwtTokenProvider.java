@@ -1,5 +1,6 @@
 package bangbang.gourmet.common.security.jwt;
 
+import bangbang.gourmet.common.domain.SocialProvider;
 import bangbang.gourmet.common.security.jwt.dto.TokenPair;
 import bangbang.gourmet.common.security.jwt.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
@@ -31,42 +32,50 @@ public class JwtTokenProvider {
         signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public TokenPair generateTokenPair(Long userId, String email) {
+    public TokenPair generateTokenPair(Long userId, SocialProvider provider) {
         // 기존 토큰 삭제 (재로그인 시)
         refreshTokenService.deleteRefreshToken(userId);
 
-        String accessToken = createAccessToken(email);
-        String refreshToken = createRefreshToken(email);
+        String accessToken = createAccessToken(userId, provider);
+        String refreshToken = createRefreshToken(userId, provider);
 
         // Redis에 리프레시 토큰 저장
-        refreshTokenService.saveRefreshToken(userId, email, refreshToken);
+        refreshTokenService.saveRefreshToken(userId, refreshToken);
 
         return new TokenPair(accessToken, refreshToken);
     }
 
-    private String createAccessToken(String email) {
-        Claims claims = getAccessTokenClaims(email);
+    private String createAccessToken(Long userId, SocialProvider provider) {
+        Claims claims = getAccessTokenClaims(userId, provider);
         return createToken(claims);
     }
 
-    private String createRefreshToken(String email) {
-        Claims claims = getRefreshTokenClaims(email);
+    private String createRefreshToken(Long userId, SocialProvider provider) {
+        Claims claims = getRefreshTokenClaims(userId, provider);
         return createToken(claims);
     }
 
-    private Claims getAccessTokenClaims(String email){
+    private Claims getAccessTokenClaims(Long userId, SocialProvider provider){
         Date now = new Date();
-        return Jwts.claims()
-                .setSubject(email)
-                .setIssuedAt(now)
+        Claims claims = Jwts.claims()
+                .setSubject(String.valueOf(userId));
+
+        claims.put("provider", provider.name());
+        claims.put("type", "ACCESS_TOKEN");
+
+        return claims.setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME));
     }
 
-    private Claims getRefreshTokenClaims(String email) {
+    private Claims getRefreshTokenClaims(Long userId, SocialProvider provider) {
         Date now = new Date();
-        return Jwts.claims()
-                .setSubject(email)
-                .setIssuedAt(now)
+        Claims claims = Jwts.claims()
+                .setSubject(String.valueOf(userId));
+
+        claims.put("provider", provider.name());
+        claims.put("type", "REFRESH_TOKEN");
+
+        return claims.setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRE_TIME));
     }
 
