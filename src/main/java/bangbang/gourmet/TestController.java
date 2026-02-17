@@ -1,5 +1,6 @@
 package bangbang.gourmet;
 
+import bangbang.gourmet.common.annotation.UserId;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
@@ -31,5 +32,10 @@ public class TestController {
     public Response<String> crawl(){
         naverCrawlSyncService.startAsyncCrawl();
         return Response.success(SuccessCode.SUCCESS, "crawl");
+    }
+
+    @GetMapping("/api/test")
+    public void test(@UserId Long id){
+        log.info("id:{}", id);
     }
 }

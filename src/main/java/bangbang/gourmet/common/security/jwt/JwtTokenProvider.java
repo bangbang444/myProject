@@ -1,10 +1,13 @@
 package bangbang.gourmet.common.security.jwt;
 
 import bangbang.gourmet.common.domain.SocialProvider;
+import bangbang.gourmet.common.exception.model.UnauthorizedException;
+import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.common.security.jwt.dto.TokenPair;
 import bangbang.gourmet.common.security.jwt.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -85,5 +88,31 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .signWith(this.signingKey)
                 .compact(); // 자동 인코딩
+    }
+
+    public boolean validateToken(String token) {
+        try{
+            Claims claims = getBody(token);
+
+            if(!"ACCESS_TOKEN".equals(claims.get("type"))){
+                throw new UnauthorizedException(ErrorCode.UNAUTHORIZED_USER);
+            }
+
+            return !claims.getExpiration().before(new Date());
+        }catch (JwtException | IllegalArgumentException e){
+            return false;
+        }
+    }
+
+    public String getSubject(String token) {
+        return getBody(token).getSubject();
+    }
+
+    private Claims getBody(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(this.signingKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }
