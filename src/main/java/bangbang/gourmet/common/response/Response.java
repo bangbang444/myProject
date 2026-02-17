@@ -1,11 +1,13 @@
 package bangbang.gourmet.common.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 @JsonPropertyOrder({"code", "message", "data"})
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response<T> {
 
     private final int code;
@@ -22,7 +24,7 @@ public class Response<T> {
         return new Response<>(code, data);
     }
 
-    public static <T> Response<T> error(ErrorCode code, T data){
-        return new Response<>(code, data);
+    public static <T> Response<T> error(ErrorCode code){
+        return new Response<>(code, null);
     }
 }
