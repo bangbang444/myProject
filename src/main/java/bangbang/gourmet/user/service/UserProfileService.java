@@ -2,7 +2,6 @@ package bangbang.gourmet.user.service;
 
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
-import bangbang.gourmet.global.s3.S3Buckets;
 import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.social.repository.FollowRepository;
 import bangbang.gourmet.user.controller.dto.ProfileImageUpdateDto;
@@ -31,10 +30,10 @@ public class UserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        long followerCount = followRepository.countByFollowerId(userId);
-        long followingCount = followRepository.countByFollowingId(userId);
+        long followerCount = followRepository.countFollowingsByFollowerId(userId);
+        long followingCount = followRepository.countFollowersByFollowingId(userId);
 
-        return ProfileResponseDto.from(user, user.getProfileImageKey(), followerCount, followingCount, 0);
+        return ProfileResponseDto.from(user, followerCount, followingCount, 0);
     }
 
     @Transactional
@@ -57,7 +56,7 @@ public class UserProfileService {
                 s3Service.delete(USER, user.getProfileImageKey());
             }
 
-            finalKey = s3Service.upload(file, USER, "profiles");
+            finalKey = s3Service.uploadImage(file, USER, PROFILES);
             user.updateProfileImage(finalKey);
         }else{
             // 기본 이미지
@@ -67,8 +66,6 @@ public class UserProfileService {
             }
             finalKey = null;
         }
-
-        log.info("finalKey={}", finalKey);
 
         return ProfileImageUpdateDto.from(finalKey);
     }

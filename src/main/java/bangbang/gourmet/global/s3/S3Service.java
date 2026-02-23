@@ -1,5 +1,8 @@
 package bangbang.gourmet.global.s3;
 
+import bangbang.gourmet.common.exception.model.S3UploadException;
+import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.common.util.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -8,6 +11,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -17,6 +21,13 @@ import java.util.UUID;
 public class S3Service {
 
     private final S3Client s3Client;
+
+    public String uploadImage(MultipartFile file, String bucketName, String dirName) {
+        FileValidator.validateImageFile(file);
+
+        // 2. 검증 통과 시 기존 업로드 로직 실행
+        return upload(file, bucketName, dirName);
+    }
 
     public String upload(MultipartFile file, String bucketName, String dirName) {
         String fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -31,7 +42,7 @@ public class S3Service {
 
             return fileName;
         } catch(IOException e){
-            throw new RuntimeException("S3업로드 에러",e);
+            throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
         }
     }
 
@@ -41,11 +52,5 @@ public class S3Service {
                 bucket(bucketName).
                 key(key).
                 build());
-    }
-
-    public String generateProfileUrl(String bucketName, String key){
-        if (key == null || key.isBlank()) return null;
-        // 형식: /버킷명/경로
-        return String.format("%s/%s", bucketName, key);
     }
 }

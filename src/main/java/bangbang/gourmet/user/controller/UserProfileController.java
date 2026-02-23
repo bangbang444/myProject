@@ -24,20 +24,17 @@ public class UserProfileController {
     // 프로필 조회
     @GetMapping("/me")
     public Response<ProfileResponseDto> getProfile(@UserId Long userId){
-        log.debug("getProfile");
         return Response.success(SuccessCode.SUCCESS, userProfileService.getProfile(userId));
     }
 
     @PatchMapping("/me/info")
     public Response<Void> updateInfo(@UserId Long userId, @RequestBody @Valid ProfileUpdateDto dto){
-        log.info("1");
         userProfileService.updateProfileInfo(userId, dto);
         return Response.success(SuccessCode.SUCCESS, null);
     }
 
     @PostMapping("/me/image")
     public Response<ProfileImageUpdateDto> updateImage(@UserId Long userId, @RequestParam("file") MultipartFile file){
-        log.info("2");
         return Response.success(SuccessCode.SUCCESS, userProfileService.updateProfileImage(userId, file));
     }
 

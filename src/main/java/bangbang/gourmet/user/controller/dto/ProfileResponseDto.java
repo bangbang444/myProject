@@ -11,12 +11,12 @@ public record ProfileResponseDto(
      long followingCount,
      long postCount
 ) {
-    public static ProfileResponseDto from(User user, String profileImageKey, long followerCount, long followingCount, long postCount) {
+    public static ProfileResponseDto from(User user, long followerCount, long followingCount, long postCount) {
         return new ProfileResponseDto(
                 user.getId(),
                 user.getNickname(),
                 user.getBio(),
-                profileImageKey,
+                user.getProfileImageKey(),
                 followerCount,
                 followingCount,
                 postCount
