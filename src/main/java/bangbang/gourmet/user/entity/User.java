@@ -36,7 +36,10 @@ public class User extends BaseEntity {
     private String nickname;
 
     @Column(nullable = true)
-    private String imgUrl;
+    private String bio; // 자기소개
+
+    @Column(nullable = true)
+    private String profileImageKey;
 
     @Builder
     public User(String email, String nickname, Role role, SocialProvider provider, String providerId) {
@@ -45,5 +48,14 @@ public class User extends BaseEntity {
         this.role = role == null ? Role.ROLE_USER : role;
         this.provider = provider;
         this.providerId = providerId;
+    }
+
+    public void updateProfile(String nickname, String bio){
+        this.nickname = nickname;
+        this.bio = bio;
+    }
+
+    public void updateProfileImage(String profileImageKey){
+        this.profileImageKey = profileImageKey;
     }
 }
