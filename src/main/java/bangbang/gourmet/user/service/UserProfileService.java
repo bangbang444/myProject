@@ -4,6 +4,7 @@ import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.global.s3.S3Buckets;
 import bangbang.gourmet.global.s3.S3Service;
+import bangbang.gourmet.social.repository.FollowRepository;
 import bangbang.gourmet.user.controller.dto.ProfileImageUpdateDto;
 import bangbang.gourmet.user.controller.dto.ProfileResponseDto;
 import bangbang.gourmet.user.controller.dto.ProfileUpdateDto;
@@ -22,6 +23,7 @@ import static bangbang.gourmet.global.s3.S3Buckets.*;
 @RequiredArgsConstructor
 public class UserProfileService {
 
+    private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
@@ -29,7 +31,10 @@ public class UserProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
-        return ProfileResponseDto.from(user, user.getProfileImageKey());
+        long followerCount = followRepository.countByFollowerId(userId);
+        long followingCount = followRepository.countByFollowingId(userId);
+
+        return ProfileResponseDto.from(user, user.getProfileImageKey(), followerCount, followingCount, 0);
     }
 
     @Transactional
