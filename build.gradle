@@ -24,6 +24,16 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+	set('springAiVersion', "1.0.0-M6")
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+	}
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
@@ -65,6 +75,9 @@ dependencies {
 
 	// garage
 	implementation 'software.amazon.awssdk:s3:2.20.0'
+
+	// spring-ai
+	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 }
 
 tasks.named('test') {
