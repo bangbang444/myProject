@@ -1,5 +1,6 @@
 package bangbang.gourmet.crawler;
 
+import bangbang.gourmet.global.ncp.NcpMapService;
 import bangbang.gourmet.restaurant.entity.*;
 import bangbang.gourmet.restaurant.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ public class NaverCrawlerService {
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final OpeningHourRepository openingHourRepository;
     private final MenuRepository menuRepository;
+
+    private final NcpMapService ncpMapService;
 
     @Transactional
     public void saveCrawledData(RestaurantCrawledDto dto) {
@@ -84,8 +87,14 @@ public class NaverCrawlerService {
             menuRepository.saveAll(newMenus);
         }
 
-        // 6. 최종 저장
+        // 6. 저장
         restaurantRepository.save(restaurant); // 명시적인 save() 호출은 생략 가능 (Transaction 종료 시 자동 반영)
+        // 7. 주소 등록
+        ncpMapService.reverseGeocode(
+                restaurant.getRestaurantId(),
+                restaurant.getLatitude(),
+                restaurant.getLongitude()
+        );
         log.info("성공적으로 저장/업데이트 되었습니다: {}", restaurant.getRestaurantName());
     }
 }

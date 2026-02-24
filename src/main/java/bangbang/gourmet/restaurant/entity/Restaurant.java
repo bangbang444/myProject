@@ -24,6 +24,12 @@ public class Restaurant extends BaseEntity {
     @Column(nullable = false)
     private String address;
 
+    // 주소 필터링용 필드
+    private String sido;
+    private String sigungu;
+    private String dong;
+    private String addressFull;
+
     @OneToMany(mappedBy = "restaurant")
     @Builder.Default
     private List<RestaurantCategory> restaurantCategories = new ArrayList<>();
@@ -47,5 +53,12 @@ public class Restaurant extends BaseEntity {
     public void updateInfo(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void updateAddress(String sido, String sigungu, String dong, String addressFull) {
+        this.sido = sido;
+        this.sigungu = sigungu;
+        this.dong = dong;
+        this.addressFull = addressFull;
     }
 }
