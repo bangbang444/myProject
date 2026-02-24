@@ -42,6 +42,8 @@ public class Restaurant extends BaseEntity {
 
     private double longitude;
 
+    private String mainCategory;
+
     @OneToMany(mappedBy = "restaurant")
     @Builder.Default
     private List<OpeningHour> openingHours = new ArrayList<>();
@@ -60,5 +62,9 @@ public class Restaurant extends BaseEntity {
         this.sigungu = sigungu;
         this.dong = dong;
         this.addressFull = addressFull;
+    }
+
+    public void updateMainCategory(String mainCategory) {
+        this.mainCategory = mainCategory;
     }
 }
