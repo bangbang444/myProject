@@ -13,5 +13,5 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     // 리뷰 상세나 피드에서 좋아요 개수 보줄 때 사용
     long countByReview(Review review);
     // 내가 이미 좋아요를 눌렀는지 확인 (피드 조회용)
-    boolean existsByUserAndReview(User user, Review review);
+    boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
 }

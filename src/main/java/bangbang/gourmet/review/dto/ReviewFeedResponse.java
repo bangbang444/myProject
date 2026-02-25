@@ -16,11 +16,12 @@ public record ReviewFeedResponse(
         String content,          // 리뷰 내용
         Double rating,           // 평점
         List<String> imageUrls,  // 리뷰 이미지 리스트
-        long likeCount,          // 좋아요 수 (우선 0)
-        long commentCount,       // 댓글 수 (우선 0)
+        long likeCount,          // 좋아요 수
+        long commentCount,       // 댓글 수
+        boolean isLiked,
         LocalDateTime createdAt  // 작성 시간
 ) {
-    public static ReviewFeedResponse from(Review review) {
+    public static ReviewFeedResponse of(Review review, long likeCount, long commentCount, boolean isLiked) {
         return new ReviewFeedResponse(
                 review.getId(),
                 review.getUser().getId(),
@@ -33,8 +34,9 @@ public record ReviewFeedResponse(
                 review.getImages().stream()
                         .map(ReviewImage::getImageUrl)
                         .toList(),
-                0L, // 좋아요 기능 구현 전 기본값
-                0L, // 댓글 기능 구현 전 기본값
+                likeCount, // 좋아요 기능 구현 전 기본값
+                commentCount, // 댓글 기능 구현 전 기본값
+                isLiked,
                 review.getCreatedDate()
         );
     }
