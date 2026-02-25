@@ -4,8 +4,10 @@ import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Review;
+import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.social.repository.FollowRepository;
+import bangbang.gourmet.social.repository.ReviewLikeRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,12 @@ class ReviewFeedServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private ReviewLikeRepository reviewLikeRepository;
+
     @InjectMocks
     private ReviewFeedService reviewFeedService;
 
@@ -49,8 +57,6 @@ class ReviewFeedServiceTest {
         Long followingId = 2L;
 
         given(userRepository.existsById(currentUserId)).willReturn(true);
-
-        // 1. 내가 2번 유저를 팔로우하고 있다고 가정
         given(followRepository.findFollowingIdsByFollowerId(currentUserId))
                 .willReturn(List.of(followingId));
 
@@ -59,6 +65,10 @@ class ReviewFeedServiceTest {
         given(reviewRepository.findAllByUserIds(List.of(followingId)))
                 .willReturn(List.of(review));
 
+        given(reviewLikeRepository.countByReview(review)).willReturn(5L); // 좋아요 5개라고 가정
+        given(commentRepository.countByReview(review)).willReturn(3L); // 댓글 3개라고 가정
+        given(reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, review.getId())).willReturn(true); // 내가 좋아요 누름
+
         // when (실행)
         List<ReviewFeedResponse> result = reviewFeedService.getFollowerFeed(currentUserId);
 
@@ -66,6 +76,9 @@ class ReviewFeedServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).userId()).isEqualTo(followingId);
         assertThat(result.get(0).restaurantName()).isEqualTo("준식이네 맛집");
+        assertThat(result.get(0).likeCount()).isEqualTo(5L);
+        assertThat(result.get(0).commentCount()).isEqualTo(3L);
+        assertThat(result.get(0).isLiked()).isTrue();
     }
 
     @Test

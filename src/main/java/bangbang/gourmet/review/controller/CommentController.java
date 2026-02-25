@@ -25,7 +25,7 @@ public class CommentController {
             @PathVariable Long reviewId,
             @UserId Long userId,
             @RequestBody CommentCreateRequest request
-    ) {;
+    ) {
         return Response.success(SuccessCode.SUCCESS, commentService.createComment(userId, reviewId, request.content()));
     }
 

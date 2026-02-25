@@ -41,7 +41,8 @@ public class ReviewFeedService {
 
         List<Review> reviews = reviewRepository.findAllByUserIds(followingIds);
 
-        // 3. 해당 유저들의 리뷰만 Fetch Join으로 조회
+
+        // TODO: 3번 쿼리(n+1) 문제, 리뷰 목록으로 한번에 조회하기
         return reviews.stream()
                 .map(review -> {
                     long likeCount = reviewLikeRepository.countByReview(review);
