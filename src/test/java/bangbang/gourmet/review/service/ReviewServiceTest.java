@@ -5,7 +5,9 @@ import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
+import bangbang.gourmet.review.dto.ReviewUpdateRequest;
 import bangbang.gourmet.review.entity.Review;
+import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
@@ -16,8 +18,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -28,6 +36,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
@@ -147,13 +157,68 @@ class ReviewServiceTest {
         assertThat(result.get(0).reviewId()).isEqualTo(100L); // ID 검증 추가
         assertThat(result.get(0).nickname()).isEqualTo("jason");
         assertThat(result.get(0).rating()).isEqualTo(4.5);
-        assertThat(result.get(0).imageUrls()).hasSize(2);
-        assertThat(result.get(0).imageUrls()).contains(
+
+        List<String> extractedUrls = result.get(0).images().stream()
+                .map(ReviewResponse.ReviewImageDetail::imageUrl)
+                .toList();
+        assertThat(extractedUrls).hasSize(2);
+        assertThat(extractedUrls).contains(
                 "https://s3.url/image1.jpg",
                 "https://s3.url/image2.jpg"
         );
+        assertThat(result.get(0).images().get(0).imageId()).isNotNull();
 
         // Repository 메서드가 호출되었는지 확인
         verify(reviewRepository, times(1)).findAllByRestaurantIdWithImages(restaurantId);
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 성공 테스트 - 텍스트 수정 및 이미지 추가/삭제")
+    void updateReview_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long reviewId = 100L;
+
+        // 가짜 유저와 기존 리뷰 생성
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Review review = Review.builder()
+                .user(user)
+                .content("원래 내용")
+                .rating(3.0)
+                .build();
+        ReflectionTestUtils.setField(review, "id", reviewId);
+
+        // 삭제할 가짜 이미지들 생성 (ID 10)
+        ReviewImage img1 = ReviewImage.builder()
+                .imageUrl("old-image-url.jpg")
+                .review(review)
+                .build();
+        ReflectionTestUtils.setField(img1, "id", 10L);
+        review.getImages().add(img1);
+
+        // 리뷰의 이미지 리스트에 추가 (양방향 연결)
+        ReviewUpdateRequest request = new ReviewUpdateRequest("수정된 내용", 5.0, List.of(10L));
+
+        MockMultipartFile newImage = new MockMultipartFile("newImages", "new.jpg", "image/jpeg", "content".getBytes());
+        List<MultipartFile> newImages = List.of(newImage);
+
+        // Mock 설정
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+        given(reviewImageRepository.findAllById(anyList())).willReturn(List.of(img1));
+        given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("new-key.jpg");
+
+        // 💡 2. 실행 (When)
+        reviewService.updateReview(userId, reviewId, request, newImages);
+
+        // 💡 3. 검증 (Then)
+        // 텍스트 및 평점 수정 확인 (더티 체킹)
+        assertThat(review.getContent()).isEqualTo("수정된 내용");
+        assertThat(review.getRating()).isEqualTo(5.0);
+
+        verify(s3Service, times(1)).delete(anyString(), anyString()); // S3 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList()); // DB 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).saveAll(anyList()); // 새 이미지 저장 확인
     }
 }
