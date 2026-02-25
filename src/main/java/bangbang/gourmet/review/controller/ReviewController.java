@@ -9,9 +9,7 @@ import bangbang.gourmet.review.dto.ReviewUpdateRequest;
 import bangbang.gourmet.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,6 +48,15 @@ public class ReviewController {
         // 서비스 파라미터를 수정해서 넘길 수 있습니다.)
         reviewService.updateReview(userId, reviewId, request, newImages);
 
+        return Response.success(SuccessCode.SUCCESS, null);
+    }
+
+    @DeleteMapping("/{reviewId}")
+    public Response<Void> deleteReview(
+            @UserId Long userId,
+            @PathVariable Long reviewId
+    ) {
+        reviewService.deleteReview(userId, reviewId);
         return Response.success(SuccessCode.SUCCESS, null);
     }
 }

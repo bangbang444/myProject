@@ -119,4 +119,26 @@ public class ReviewService {
         // 4. 리뷰 기본 정보 수정 (더티 체킹)
         review.update(request.content(), request.rating());
     }
+
+    @Transactional
+    public void deleteReview(Long userId, Long reviewId) {
+        // 1. 리뷰 조회
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.REVIEW_NOT_FOUND));
+
+        // 2. 권한 확인
+        if (!review.getUser().getId().equals(userId)) {
+            throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
+        }
+
+        // 3. S3에서 이 리뷰에 달린 모든 이미지 삭제
+        review.getImages().forEach(image -> s3Service.delete(SNS, image.getImageUrl()));
+
+        // 4. DB에서 리뷰 삭제 - 이미지 레코드부터 지우는 게 안전
+        reviewImageRepository.deleteAllInBatch(review.getImages());
+        reviewRepository.delete(review);
+
+        // 5. 식당 평점/리뷰 개수 갱신
+        review.getRestaurant().decreaseReviewCount(review.getRating());
+    }
 }
