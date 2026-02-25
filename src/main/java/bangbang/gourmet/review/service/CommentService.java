@@ -74,4 +74,23 @@ public class CommentService {
         // 엔티티 업데이트 (더티 체킹)
         comment.update(request.content());
     }
+
+    @Transactional
+    public void deleteComment(Long userId, Long commentId) {
+        // 1. 실제 존재하는 유저인지 확인 (보안 강화)
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 삭제할 댓글 조회
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.COMMENT_NOT_FOUND));
+
+        // 3. 작성자 본인 확인 (권한 체크)
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
+        }
+
+        // 4. DB 삭제
+        commentRepository.delete(comment);
+    }
 }

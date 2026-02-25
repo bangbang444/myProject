@@ -50,4 +50,13 @@ public class CommentController {
 
         return Response.success(SuccessCode.SUCCESS, null);
     }
+
+    @DeleteMapping("/{commentId}")
+    public Response<Void> deleteComment(
+            @UserId Long userId,
+            @PathVariable Long commentId
+    ) {
+        commentService.deleteComment(userId, commentId);
+        return Response.success(SuccessCode.SUCCESS, null);
+    }
 }
