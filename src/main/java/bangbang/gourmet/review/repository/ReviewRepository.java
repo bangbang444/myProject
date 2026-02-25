@@ -16,4 +16,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "where r.restaurant.restaurantId = :restaurantId " +
             "order by r.createdDate desc")
     List<Review> findTop2ByRestaurantIdWithUserAndImages(@Param("restaurantId") Long restaurantId, Pageable pageable);
+
+
+    @Query("select distinct r from Review r " +
+            "left join fetch r.images " +
+            "join fetch r.user " +
+            "where r.restaurant.restaurantId = :restaurantId " +
+            "order by r.createdDate desc")
+    List<Review> findAllByRestaurantIdWithImages(@Param("restaurantId") Long restaurantId);
 }

@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,5 +45,10 @@ public class Review extends BaseEntity {
         this.user = user;
         this.rating = rating;
         this.content = content;
+    }
+
+    public void addReviewImage(String imageUrl) {
+        ReviewImage reviewImage = new ReviewImage(this, imageUrl);
+        this.images.add(reviewImage);
     }
 }

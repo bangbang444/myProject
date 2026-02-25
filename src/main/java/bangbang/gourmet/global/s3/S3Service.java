@@ -6,6 +6,7 @@ import bangbang.gourmet.common.util.FileValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -29,8 +30,9 @@ public class S3Service {
         return upload(file, bucketName, dirName);
     }
 
-    public String upload(MultipartFile file, String bucketName, String dirName) {
-        String fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+    private String upload(MultipartFile file, String bucketName, String dirName) {
+        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String fileName = dirName + "/" + UUID.randomUUID() + (extension != null ? "." + extension : "");
 
         try{
             s3Client.putObject(PutObjectRequest.builder()
