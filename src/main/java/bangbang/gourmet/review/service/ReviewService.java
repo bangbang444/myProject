@@ -55,7 +55,7 @@ public class ReviewService {
         if (images != null && !images.isEmpty()) {
             List<ReviewImage> reviewImages = images.stream()
                     .filter(image -> !image.isEmpty())
-                    .map(image -> new ReviewImage(savedReview, s3Service.upload(image, SNS, REVIEWS)))
+                    .map(image -> new ReviewImage(savedReview, s3Service.uploadImage(image, SNS, REVIEWS)))
                     .toList();
 
             reviewImageRepository.saveAll(reviewImages);

@@ -30,7 +30,7 @@ public class S3Service {
         return upload(file, bucketName, dirName);
     }
 
-    public String upload(MultipartFile file, String bucketName, String dirName) {
+    private String upload(MultipartFile file, String bucketName, String dirName) {
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
         String fileName = dirName + "/" + UUID.randomUUID() + (extension != null ? "." + extension : "");
 

@@ -65,7 +65,7 @@ class ReviewServiceTest {
         // Mock 동작 정의
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(s3Service.upload(any(), anyString(), anyString())).willReturn("https://s3.url/test.jpg");
+        given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("https://s3.url/test.jpg");
 
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(reviewImageRepository.saveAll(anyList())).willReturn(List.of());
@@ -81,7 +81,7 @@ class ReviewServiceTest {
         // 2. 저장 메서드 호출 횟수 검증
         verify(reviewRepository, times(1)).save(any(Review.class));
         verify(reviewImageRepository, times(1)).saveAll(anyList());
-        verify(s3Service, times(1)).upload(any(), eq("sns"), eq("reviews"));
+        verify(s3Service, times(1)).uploadImage(any(), eq("sns"), eq("reviews"));
     }
 
     @Test

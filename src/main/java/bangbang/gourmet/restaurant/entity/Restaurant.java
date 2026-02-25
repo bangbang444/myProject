@@ -77,6 +77,7 @@ public class Restaurant extends BaseEntity {
         this.mainCategory = mainCategory;
     }
 
+    // TODO: 동시성 해결
     public void addReview(Double newRating){
         double totalRating = this.averageRating * this.reviewCount;
         this.reviewCount++;
