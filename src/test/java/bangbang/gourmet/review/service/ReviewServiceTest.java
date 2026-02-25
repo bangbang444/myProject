@@ -6,7 +6,6 @@ import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.entity.Review;
-import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
@@ -57,7 +56,7 @@ class ReviewServiceTest {
                 .build();
 
         User user = User.builder().nickname("jason").build();
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "정말 맛있어요!", List.of());
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "정말 맛있어요!");
 
         // 가짜 이미지 파일
         MockMultipartFile image = new MockMultipartFile("images", "test.jpg", "image/jpeg", "test".getBytes());
@@ -67,7 +66,9 @@ class ReviewServiceTest {
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(s3Service.upload(any(), anyString(), anyString())).willReturn("https://s3.url/test.jpg");
+
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
+        given(reviewImageRepository.saveAll(anyList())).willReturn(List.of());
 
         // when (실행)
         reviewService.createReview(restaurantId, userId, request, images);
@@ -79,7 +80,7 @@ class ReviewServiceTest {
 
         // 2. 저장 메서드 호출 횟수 검증
         verify(reviewRepository, times(1)).save(any(Review.class));
-        verify(reviewImageRepository, times(1)).save(any(ReviewImage.class));
+        verify(reviewImageRepository, times(1)).saveAll(anyList());
         verify(s3Service, times(1)).upload(any(), eq("sns"), eq("reviews"));
     }
 
@@ -98,14 +99,14 @@ class ReviewServiceTest {
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         // given
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "글만 있는 리뷰", List.of());
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "글만 있는 리뷰");
         List<MultipartFile> images = List.of(); // 빈 리스트
 
         // when
         reviewService.createReview(restaurantId, userId, request, images);
 
         // then
-        verify(reviewImageRepository, times(0)).save(any());
+        verify(reviewImageRepository, times(0)).saveAll(anyList());
         assertThat(restaurant.getReviewCount()).isEqualTo(1); // 0개에서 1개로 증가했는지도 확인!
     }
 

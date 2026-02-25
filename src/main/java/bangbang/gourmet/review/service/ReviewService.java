@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static bangbang.gourmet.global.s3.S3Buckets.*;
@@ -51,16 +52,13 @@ public class ReviewService {
         Review savedReview = reviewRepository.save(review);
 
         // 2. 이미지 업로드
-        if(images != null && !images.isEmpty()){
-            for (MultipartFile image : images) {
-                if (!image.isEmpty()) {
-                    String imageUrl = s3Service.upload(image, SNS, REVIEWS); // 병현님의 업로드 로직 호출
+        if (images != null && !images.isEmpty()) {
+            List<ReviewImage> reviewImages = images.stream()
+                    .filter(image -> !image.isEmpty())
+                    .map(image -> new ReviewImage(savedReview, s3Service.upload(image, SNS, REVIEWS)))
+                    .toList();
 
-                    // Setter 대신 생성자로 연관관계 맺기
-                    ReviewImage reviewImage = new ReviewImage(savedReview, imageUrl);
-                    reviewImageRepository.save(reviewImage);
-                }
-            }
+            reviewImageRepository.saveAll(reviewImages);
         }
 
         // 3. 식당 평점 및 리뷰개수 동기화
