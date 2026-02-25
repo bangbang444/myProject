@@ -22,12 +22,4 @@ public record RestaurantDetailResponse(
         Integer reviewCount,
         List<ReviewSimpleResponse> recentReviews,
         List<String> imageUrls
-) {
-    public RestaurantDetailResponse {
-        rating = (rating != null) ? Math.round(rating * 10) / 10.0 : 0.0;
-
-        operatingHours = (operatingHours != null) ? operatingHours : Collections.emptyList();
-        recentReviews = (recentReviews != null) ? recentReviews : Collections.emptyList();
-        imageUrls = (imageUrls != null) ? imageUrls : Collections.emptyList();
-    }
-}
+) {}

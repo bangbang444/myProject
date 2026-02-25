@@ -9,9 +9,4 @@ public record ReviewSimpleResponse(
         String content,
         List<String> imageUrls,
         String createdAt    // "2 days ago" 등 가공된 날짜 정보
-) {
-    public ReviewSimpleResponse {
-        rating = (rating != null) ? Math.round(rating * 10) / 10.0 : 0.0;
-        imageUrls = (imageUrls != null) ? imageUrls : java.util.Collections.emptyList();
-    }
-}
+) {}
