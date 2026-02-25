@@ -5,4 +5,5 @@ public class S3Buckets {
     public static final String RESTAURANT = "restaurant";
     public static final String SNS = "sns";
     public static final String PROFILES = "profiles";
+    public static final String REVIEWS = "reviews";
 }

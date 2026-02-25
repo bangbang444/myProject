@@ -27,7 +27,6 @@ class CategoryClassifierTest {
         String result = categoryClassifier.classify(restaurantName, rawCategory, menuNames);
 
         // then
-        System.out.println("=== AI 분류 결과: " + result + " ===");
         assertThat(result).isEqualTo("일식");
     }
 

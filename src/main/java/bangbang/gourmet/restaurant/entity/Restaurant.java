@@ -76,4 +76,10 @@ public class Restaurant extends BaseEntity {
     public void updateMainCategory(String mainCategory) {
         this.mainCategory = mainCategory;
     }
+
+    public void addReview(Double newRating){
+        double totalRating = this.averageRating * this.reviewCount;
+        this.reviewCount++;
+        this.averageRating = (totalRating + newRating) / this.reviewCount;
+    }
 }
