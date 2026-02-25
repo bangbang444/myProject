@@ -3,6 +3,10 @@ package bangbang.gourmet.social.repository;
 import bangbang.gourmet.social.entity.Follow;
 import bangbang.gourmet.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface FollowRepository extends JpaRepository<Follow,Long> {
     // 팔로우 여부 체크
@@ -15,4 +19,7 @@ public interface FollowRepository extends JpaRepository<Follow,Long> {
     long countFollowersByFollowingId(Long followingId);
     // 팔로워 수
     long countFollowingsByFollowerId(Long followerId);
+
+    @Query("select f.following.id from Follow f where f.follower.id = :followerId")
+    List<Long> findFollowingIdsByFollowerId(@Param("followerId") Long followerId);
 }
