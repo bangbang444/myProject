@@ -24,4 +24,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "where r.restaurant.restaurantId = :restaurantId " +
             "order by r.createdDate desc")
     List<Review> findAllByRestaurantIdWithImages(@Param("restaurantId") Long restaurantId);
+
+    @Query("select distinct r from Review r " +
+            "join fetch r.user " +
+            "join fetch r.restaurant " +
+            "left join fetch r.images " +
+            "where r.user.id in :userIds " + // 넘겨받은 팔로잉 ID 리스트에 포함된 것만!
+            "order by r.createdDate desc")
+    List<Review> findAllByUserIds(@Param("userIds") List<Long> userIds);
 }
