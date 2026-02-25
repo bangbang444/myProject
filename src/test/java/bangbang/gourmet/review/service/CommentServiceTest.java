@@ -165,4 +165,31 @@ class CommentServiceTest {
         assertThatThrownBy(() -> commentService.updateComment(nonExistUserId, 1L, new CommentUpdateRequest("내용")))
                 .isInstanceOf(NotFoundException.class);
     }
+
+    @Test
+    @DisplayName("댓글 삭제 성공 테스트 - 본인이 작성한 댓글을 삭제한다")
+    void deleteComment_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long commentId = 50L;
+
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Comment comment = Comment.builder().user(user).build();
+        ReflectionTestUtils.setField(comment, "id", commentId);
+
+        // 유저와 댓글이 모두 DB에 있다고 가정
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // 💡 2. 실행 (When)
+        commentService.deleteComment(userId, commentId);
+
+        // 💡 3. 검증 (Then)
+        // delete가 실제로 호출되었는지 확인
+        verify(commentRepository, times(1)).delete(any(Comment.class));
+        // 유저 조회가 수행되었는지 확인
+        verify(userRepository, times(1)).findById(userId);
+    }
 }
