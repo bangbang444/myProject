@@ -221,4 +221,52 @@ class ReviewServiceTest {
         verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList()); // DB 삭제 호출 확인
         verify(reviewImageRepository, times(1)).saveAll(anyList()); // 새 이미지 저장 확인
     }
+
+    @Test
+    @DisplayName("리뷰 삭제 성공 테스트 - 식당 통계 반영 및 이미지/리뷰 삭제")
+    void deleteReview_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long reviewId = 100L;
+
+        // 가짜 유저 생성
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        // 가짜 식당 생성 (리뷰 2개, 평점 4.5점 가정)
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(4.5)
+                .reviewCount(2)
+                .build();
+
+        // 삭제할 리뷰 생성 (평점 5.0점)
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(5.0)
+                .build();
+        ReflectionTestUtils.setField(review, "id", reviewId);
+
+        // 삭제될 이미지 하나 추가
+        ReviewImage img1 = ReviewImage.builder().imageUrl("delete-me.jpg").review(review).build();
+        review.getImages().add(img1);
+
+        // Mock 동작 정의
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+
+        // 💡 2. 실행 (When)
+        reviewService.deleteReview(userId, reviewId);
+
+        // 💡 3. 검증 (Then)
+        // 식당 통계 검증: (4.5 * 2 - 5.0) / 1 = 4.0
+        assertThat(restaurant.getReviewCount()).isEqualTo(1);
+        assertThat(restaurant.getAverageRating()).isEqualTo(4.0);
+
+        // S3 삭제 호출 확인
+        verify(s3Service, times(1)).delete(anyString(), eq("delete-me.jpg"));
+
+        // DB 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList());
+        verify(reviewRepository, times(1)).delete(any(Review.class));
+    }
 }
