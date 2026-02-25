@@ -5,8 +5,10 @@ import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
+import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.social.repository.FollowRepository;
+import bangbang.gourmet.social.repository.ReviewLikeRepository;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,24 +22,33 @@ public class ReviewFeedService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final FollowRepository followRepository;
+    private final CommentRepository commentRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
     @Transactional(readOnly = true)
-    public List<ReviewFeedResponse> getFollowerFeed(Long currentUserId) {
-        if (!userRepository.existsById(currentUserId)) {
+    public List<ReviewFeedResponse> getFollowerFeed(Long userId) {
+        if (!userRepository.existsById(userId)) {
             throw new BadRequestException(ErrorCode.USER_NOT_FOUND);
         }
 
         // 1. 내가 팔로우하는 유저들의 ID 목록 조회
-        List<Long> followingIds = followRepository.findFollowingIdsByFollowerId(currentUserId);
+        List<Long> followingIds = followRepository.findFollowingIdsByFollowerId(userId);
 
         // 2. 만약 팔로우하는 사람이 없다면 빈 리스트 반환 (혹은 추천 피드)
         if (followingIds.isEmpty()) {
             return List.of();
         }
 
+        List<Review> reviews = reviewRepository.findAllByUserIds(followingIds);
+
         // 3. 해당 유저들의 리뷰만 Fetch Join으로 조회
-        return reviewRepository.findAllByUserIds(followingIds).stream()
-                .map(ReviewFeedResponse::from)
+        return reviews.stream()
+                .map(review -> {
+                    long likeCount = reviewLikeRepository.countByReview(review);
+                    long commentCount = commentRepository.countByReview(review);
+                    boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(userId, review.getId());
+                    return ReviewFeedResponse.of(review, likeCount, commentCount, isLiked);
+                })
                 .toList();
     }
 }
