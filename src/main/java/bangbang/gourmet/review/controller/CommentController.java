@@ -7,6 +7,7 @@ import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.review.dto.CommentCreateRequest;
 import bangbang.gourmet.review.dto.CommentCreateResponse;
 import bangbang.gourmet.review.dto.CommentResponse;
+import bangbang.gourmet.review.dto.CommentUpdateRequest;
 import bangbang.gourmet.review.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -37,5 +38,16 @@ public class CommentController {
     ) {
         List<CommentResponse> comments = commentService.getComments(reviewId, userId);
         return Response.success(SuccessCode.SUCCESS, comments);
+    }
+
+    @PatchMapping("/{commentId}")
+    public Response<Void> updateComment(
+            @UserId Long userId,
+            @PathVariable Long commentId,
+            @RequestBody CommentUpdateRequest request
+    ) {
+        commentService.updateComment(userId, commentId, request);
+
+        return Response.success(SuccessCode.SUCCESS, null);
     }
 }

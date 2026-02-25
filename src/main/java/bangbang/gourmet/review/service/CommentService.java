@@ -1,9 +1,11 @@
 package bangbang.gourmet.review.service;
 
+import bangbang.gourmet.common.exception.model.ForbiddenException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.review.dto.CommentCreateResponse;
 import bangbang.gourmet.review.dto.CommentResponse;
+import bangbang.gourmet.review.dto.CommentUpdateRequest;
 import bangbang.gourmet.review.entity.Comment;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
@@ -54,5 +56,22 @@ public class CommentService {
                 findAllByReviewOrderByCreatedDate(review).stream()
                 .map(comment -> CommentResponse.of(comment, userId))
                 .toList();
+    }
+
+    @Transactional
+    public void updateComment(Long userId, Long commentId, CommentUpdateRequest request) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.COMMENT_NOT_FOUND));
+
+        // 작성자 본인 확인
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
+        }
+
+        // 엔티티 업데이트 (더티 체킹)
+        comment.update(request.content());
     }
 }
