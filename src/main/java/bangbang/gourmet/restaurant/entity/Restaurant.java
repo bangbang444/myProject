@@ -32,6 +32,10 @@ public class Restaurant extends BaseEntity {
 
     @OneToMany(mappedBy = "restaurant")
     @Builder.Default
+    private final List<RestaurantImage> imageUrls = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant")
+    @Builder.Default
     private List<RestaurantCategory> restaurantCategories = new ArrayList<>();
 
     private double averageRating;
@@ -43,6 +47,11 @@ public class Restaurant extends BaseEntity {
     private double longitude;
 
     private String mainCategory;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String phoneNumber;
 
     @OneToMany(mappedBy = "restaurant")
     @Builder.Default

@@ -19,4 +19,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     List<Restaurant> findByLocationRange(@Param("minLat") double minLat, @Param("maxLat") double maxLat,
                                          @Param("minLon") double minLon, @Param("maxLon") double maxLon);
 
+
+    @Query("select r from Restaurant r left join fetch r.imageUrls where r.restaurantId = :id")
+    Optional<Restaurant> findByIdWithImages(@Param("id") Long id);
 }

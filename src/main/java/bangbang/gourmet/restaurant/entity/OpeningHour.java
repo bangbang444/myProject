@@ -36,4 +36,11 @@ public class OpeningHour {
                 .lastOrder(dto.getLastOrder())
                 .build();
     }
+
+    public String getFormattedOperatingHours() {
+        if (this.startTime == null || this.endTime == null) {
+            return "정보 없음";
+        }
+        return String.format("%s ~ %s", this.startTime, this.endTime);
+    }
 }

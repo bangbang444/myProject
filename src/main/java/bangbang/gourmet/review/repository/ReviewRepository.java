@@ -1,0 +1,19 @@
+package bangbang.gourmet.review.repository;
+
+import bangbang.gourmet.review.entity.Review;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    @Query("select distinct r from Review r " +
+            "join fetch r.user " +
+            "left join fetch r.images " +
+            "where r.restaurant.restaurantId = :restaurantId " +
+            "order by r.createdDate desc")
+    List<Review> findTop2ByRestaurantIdWithUserAndImages(@Param("restaurantId") Long restaurantId, Pageable pageable);
+}

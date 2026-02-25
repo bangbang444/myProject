@@ -3,11 +3,15 @@ package bangbang.gourmet.user.entity;
 import bangbang.gourmet.common.domain.Role;
 import bangbang.gourmet.common.domain.SocialProvider;
 import bangbang.gourmet.common.entity.BaseEntity;
+import bangbang.gourmet.review.entity.Review;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -40,6 +44,9 @@ public class User extends BaseEntity {
 
     @Column(nullable = true)
     private String profileImageKey;
+
+    @OneToMany(mappedBy = "user")
+    private List<Review> reviews = new ArrayList<>();
 
     @Builder
     public User(String email, String nickname, Role role, SocialProvider provider, String providerId) {
