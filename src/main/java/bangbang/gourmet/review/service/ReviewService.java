@@ -1,12 +1,16 @@
 package bangbang.gourmet.review.service;
 
 import bangbang.gourmet.common.exception.model.BadRequestException;
+import bangbang.gourmet.common.exception.model.ForbiddenException;
+import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.global.s3.S3Buckets;
 import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
+import bangbang.gourmet.review.dto.ReviewUpdateRequest;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
@@ -53,12 +57,14 @@ public class ReviewService {
 
         // 2. 이미지 업로드
         if (images != null && !images.isEmpty()) {
-            List<ReviewImage> reviewImages = images.stream()
+            images.stream()
                     .filter(image -> !image.isEmpty())
-                    .map(image -> new ReviewImage(savedReview, s3Service.uploadImage(image, SNS, REVIEWS)))
-                    .toList();
+                    .forEach(image -> {
+                        String uploadKey = s3Service.uploadImage(image, SNS, REVIEWS);
+                        savedReview.addReviewImage(uploadKey);
+                    });
 
-            reviewImageRepository.saveAll(reviewImages);
+            reviewImageRepository.saveAll(savedReview.getImages());
         }
 
         // 3. 식당 평점 및 리뷰개수 동기화
@@ -73,5 +79,44 @@ public class ReviewService {
         return reviews.stream()
                 .map(ReviewResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public void updateReview(Long userId, Long reviewId, ReviewUpdateRequest request, List<MultipartFile> newImages) {
+        // 1. 리뷰 조회 및 권한 확인
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if (!review.getUser().getId().equals(userId)) {
+            throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
+        }
+
+        // 2. 이미지 삭제 처리 (직접 삭제)
+        if (request.deleteImageIds() != null && !request.deleteImageIds().isEmpty()) {
+            // 보안: 해당 리뷰에 속한 이미지만 필터링해서 조회
+            List<ReviewImage> imagesToDelete = reviewImageRepository.findAllById(request.deleteImageIds());
+            for (ReviewImage img : imagesToDelete) {
+                if (!img.getReview().getId().equals(reviewId)) {
+                    throw new BadRequestException(ErrorCode.INVALID_IMAGE_OWNER);
+                }
+            }
+
+            // S3에서 파일 삭제 및 DB 레코드 삭제
+            imagesToDelete.forEach(image -> s3Service.delete(SNS, image.getImageUrl()));
+            review.getImages().removeAll(imagesToDelete);
+            reviewImageRepository.deleteAllInBatch(imagesToDelete);
+        }
+
+        // 3. 새 이미지 추가 처리
+        if (newImages != null && !newImages.isEmpty()) {
+            newImages.forEach(image -> {
+                String imageUrl = s3Service.uploadImage(image, SNS, REVIEWS);
+                review.addReviewImage(imageUrl);
+            });
+            reviewImageRepository.saveAll(review.getImages());
+        }
+
+        // 4. 리뷰 기본 정보 수정 (더티 체킹)
+        review.update(request.content(), request.rating());
     }
 }

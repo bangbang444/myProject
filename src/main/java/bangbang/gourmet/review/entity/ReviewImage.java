@@ -2,6 +2,7 @@ package bangbang.gourmet.review.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -18,8 +19,16 @@ public class ReviewImage {
 
     private String imageUrl;
 
+    @Builder
     public ReviewImage(Review review, String imageUrl) {
         this.review = review;
         this.imageUrl = imageUrl;
+    }
+
+    public static ReviewImage create(Review review, String imageKey) {
+        return ReviewImage.builder()
+                .review(review)
+                .imageUrl(imageKey)
+                .build();
     }
 }

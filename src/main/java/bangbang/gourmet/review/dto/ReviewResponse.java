@@ -11,9 +11,18 @@ public record ReviewResponse(
         String nickname, // 작성자
         Double rating,
         String content,
-        List<String> imageUrls, // 리뷰에 달린 모든 이미지 URL
+        List<ReviewImageDetail> images, // 리뷰 이미지 리스트
         LocalDateTime createdAt // ??
 ) {
+    public record ReviewImageDetail(
+            Long imageId,
+            String imageUrl
+    ) {
+        public static ReviewImageDetail from(ReviewImage reviewImage) {
+            return new ReviewImageDetail(reviewImage.getId(), reviewImage.getImageUrl());
+        }
+    }
+
     public static ReviewResponse from(Review review) {
         return new ReviewResponse(
                 review.getId(),
@@ -21,7 +30,7 @@ public record ReviewResponse(
                 review.getRating(),
                 review.getContent(),
                 review.getImages().stream()
-                        .map(ReviewImage::getImageUrl)
+                        .map(ReviewImageDetail::from)
                         .toList(),
                 review.getCreatedDate()
         );
