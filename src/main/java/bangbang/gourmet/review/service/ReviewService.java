@@ -6,6 +6,7 @@ import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
+import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
@@ -14,6 +15,7 @@ import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -30,6 +32,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
+    @Transactional
     public Long createReview(Long restaurantId, Long userId, ReviewCreateRequest request, List<MultipartFile> images) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new BadRequestException(ErrorCode.RESTAURANT_NOT_FOUND));
@@ -64,5 +67,13 @@ public class ReviewService {
         restaurant.addReview(request.rating());
 
         return savedReview.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getReviews(Long restaurantId) {
+        List<Review> reviews = reviewRepository.findAllByRestaurantIdWithImages(restaurantId);
+        return reviews.stream()
+                .map(ReviewResponse::from)
+                .toList();
     }
 }

@@ -4,6 +4,7 @@ import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
+import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
@@ -17,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -105,5 +107,52 @@ class ReviewServiceTest {
         // then
         verify(reviewImageRepository, times(0)).save(any());
         assertThat(restaurant.getReviewCount()).isEqualTo(1); // 0개에서 1개로 증가했는지도 확인!
+    }
+
+    @Test
+    @DisplayName("식당 ID로 리뷰 목록을 조회하면 이미지 URL을 포함한 DTO 리스트가 반환되어야 한다")
+    void getReviews_ReturnsReviewResponseList() {
+        // given (준비)
+        Long restaurantId = 1L;
+
+        // 1. 가짜 유저 및 식당 생성
+        User user = User.builder().nickname("jason").build();
+        Restaurant restaurant = Restaurant.builder().build();
+        ReflectionTestUtils.setField(restaurant, "restaurantId", restaurantId); // 식당 ID 주입
+
+        // 2. 가짜 리뷰 생성 및 ID 주입
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(4.5)
+                .content("정말 맛있어요!")
+                .build();
+        ReflectionTestUtils.setField(review, "id", 100L); // 리뷰 ID 주입
+
+        // 3. 리뷰 이미지 생성 및 연결
+        review.addReviewImage("https://s3.url/image1.jpg");
+        review.addReviewImage("https://s3.url/image2.jpg");
+
+        List<Review> reviews = List.of(review);
+
+        // Mock 동작 정의
+        given(reviewRepository.findAllByRestaurantIdWithImages(restaurantId)).willReturn(reviews);
+
+        // when (실행)
+        List<ReviewResponse> result = reviewService.getReviews(restaurantId);
+
+        // then (검증)
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).reviewId()).isEqualTo(100L); // ID 검증 추가
+        assertThat(result.get(0).nickname()).isEqualTo("jason");
+        assertThat(result.get(0).rating()).isEqualTo(4.5);
+        assertThat(result.get(0).imageUrls()).hasSize(2);
+        assertThat(result.get(0).imageUrls()).contains(
+                "https://s3.url/image1.jpg",
+                "https://s3.url/image2.jpg"
+        );
+
+        // Repository 메서드가 호출되었는지 확인
+        verify(reviewRepository, times(1)).findAllByRestaurantIdWithImages(restaurantId);
     }
 }

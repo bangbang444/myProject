@@ -4,6 +4,7 @@ import bangbang.gourmet.common.annotation.UserId;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
+import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,5 +27,10 @@ public class ReviewController {
             @UserId Long userId
     ){
         return Response.success(SuccessCode.SUCCESS, reviewService.createReview(restaurantId, userId, request, images));
+    }
+
+    @GetMapping("/{restaurantId}/reviews")
+    public Response<List<ReviewResponse>> getReviews(@PathVariable Long restaurantId) {
+        return Response.success(SuccessCode.SUCCESS, reviewService.getReviews(restaurantId));
     }
 }
