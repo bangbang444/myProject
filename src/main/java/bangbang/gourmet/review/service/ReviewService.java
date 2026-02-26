@@ -116,6 +116,12 @@ public class ReviewService {
             reviewImageRepository.saveAll(review.getImages());
         }
 
+        if (request.rating() != null && !request.rating().equals(review.getRating())) {
+            Restaurant restaurant = review.getRestaurant();
+
+            restaurant.updateReviewRating(review.getRating(), request.rating());
+        }
+
         // 4. 리뷰 기본 정보 수정 (더티 체킹)
         review.update(request.content(), request.rating());
     }
