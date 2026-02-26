@@ -17,7 +17,7 @@ public enum ErrorCode implements ResponseCode{
     S3_UPLOAD_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드 중 오류가 발생했습니다."),
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 식당입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않은 리뷰입니다."),
-    NOT_OWNER_ERROR(HttpStatus.FORBIDDEN, "본인이 작성한 리뷰만 수정 또는 삭제할 수 있습니다."),
+    NOT_OWNER_ERROR(HttpStatus.FORBIDDEN, "본인이 작성한 글만 수정 또는 삭제할 수 있습니다."),
     INVALID_IMAGE_OWNER(HttpStatus.BAD_REQUEST, "해당 리뷰에 속하지 않은 이미지는 수정하거나 삭제할 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다.");
 

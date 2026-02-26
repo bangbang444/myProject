@@ -90,7 +90,15 @@ public class ReviewService {
             throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
         }
 
-        // 2. 이미지 삭제 처리 (직접 삭제)
+        // 2. 평점 및 식당 통계 업데이트
+        Double newRating = (request.rating() != null) ? request.rating() : review.getRating();
+        if (request.rating() != null && !request.rating().equals(review.getRating())) {
+            Restaurant restaurant = review.getRestaurant();
+            restaurant.updateReviewRating(review.getRating(), newRating);
+        }
+        review.update(request.content(), newRating);
+
+        // 3. 이미지 삭제 처리 (직접 삭제)
         if (request.deleteImageIds() != null && !request.deleteImageIds().isEmpty()) {
             // 보안: 해당 리뷰에 속한 이미지만 필터링해서 조회
             List<ReviewImage> imagesToDelete = reviewImageRepository.findAllById(request.deleteImageIds());
@@ -106,7 +114,7 @@ public class ReviewService {
             reviewImageRepository.deleteAllInBatch(imagesToDelete);
         }
 
-        // 3. 새 이미지 추가 처리
+        // 4. 새 이미지 추가 처리
         if (newImages != null && !newImages.isEmpty()) {
             newImages.forEach(image -> {
                 String imageUrl = s3Service.uploadImage(image, SNS, REVIEWS);
@@ -114,15 +122,6 @@ public class ReviewService {
             });
             reviewImageRepository.saveAll(review.getImages());
         }
-
-        if (request.rating() != null && !request.rating().equals(review.getRating())) {
-            Restaurant restaurant = review.getRestaurant();
-
-            restaurant.updateReviewRating(review.getRating(), request.rating());
-        }
-
-        // 4. 리뷰 기본 정보 수정 (더티 체킹)
-        review.update(request.content(), request.rating());
     }
 
     @Transactional
