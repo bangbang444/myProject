@@ -6,6 +6,7 @@ import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.dto.ReviewUpdateRequest;
+import bangbang.gourmet.review.dto.UserReviewStats;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
@@ -108,12 +109,15 @@ class ReviewServiceTest {
     }
 
     @Test
-    @DisplayName("식당 ID로 리뷰 목록을 조회하면 이미지 URL을 포함한 DTO 리스트가 반환되어야 한다")
+    @DisplayName("식당 ID로 리뷰 목록을 조회하면 이미지 URL과 작성자 통계를 포함한 DTO 리스트가 반환되어야 한다")
     void getReviews_ReturnsReviewResponseList() {
         // given
         Long restaurantId = 1L;
+        Long authorId = 10L;
 
         User user = User.builder().nickname("jason").build();
+        ReflectionTestUtils.setField(user, "id", authorId);
+
         Restaurant restaurant = Restaurant.builder().build();
         ReflectionTestUtils.setField(restaurant, "restaurantId", restaurantId);
 
@@ -136,8 +140,10 @@ class ReviewServiceTest {
         }
 
         List<Review> reviews = List.of(review);
+        UserReviewStats authorStats = new UserReviewStats(authorId, 5L, 4.0);
 
         given(reviewRepository.findAllByRestaurantIdWithImages(restaurantId)).willReturn(reviews);
+        given(reviewRepository.findUserReviewStatsByUserIds(List.of(authorId))).willReturn(List.of(authorStats));
 
         // when
         List<ReviewResponse> result = reviewService.getReviews(restaurantId);
@@ -149,6 +155,8 @@ class ReviewServiceTest {
         assertThat(result.get(0).tasteRating()).isEqualTo(4.0);
         assertThat(result.get(0).atmosphereRating()).isEqualTo(5.0);
         assertThat(result.get(0).serviceRating()).isEqualTo(4.5);
+        assertThat(result.get(0).authorReviewCount()).isEqualTo(5L);
+        assertThat(result.get(0).authorAverageRating()).isEqualTo(4.0);
 
         List<String> extractedUrls = result.get(0).images().stream()
                 .map(ReviewResponse.ReviewImageDetail::imageUrl)
@@ -161,6 +169,7 @@ class ReviewServiceTest {
         assertThat(result.get(0).images().get(0).imageId()).isNotNull();
 
         verify(reviewRepository, times(1)).findAllByRestaurantIdWithImages(restaurantId);
+        verify(reviewRepository, times(1)).findUserReviewStatsByUserIds(List.of(authorId));
     }
 
     @Test
