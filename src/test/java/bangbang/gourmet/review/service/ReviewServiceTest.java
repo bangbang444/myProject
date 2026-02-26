@@ -37,6 +37,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -220,6 +221,41 @@ class ReviewServiceTest {
         verify(s3Service, times(1)).delete(anyString(), anyString()); // S3 삭제 호출 확인
         verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList()); // DB 삭제 호출 확인
         verify(reviewImageRepository, times(1)).saveAll(anyList()); // 새 이미지 저장 확인
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 시 식당의 평균 평점이 갱신되는지 확인한다")
+    void updateReview_UpdateRestaurantRating() {
+        // Given
+        Long userId = 1L;
+
+        // 식당 생성 (기존 평점 3.0, 리뷰 개수 1개라고 가정)
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(3.0)
+                .reviewCount(1)
+                .build();
+
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        // 기존 리뷰 (평점 3.0)
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(3.0)
+                .build();
+
+        given(reviewRepository.findById(anyLong())).willReturn(Optional.of(review));
+
+        // 평점을 5.0으로 수정하는 요청
+        ReviewUpdateRequest request = new ReviewUpdateRequest("내용", 5.0, null);
+
+        // When
+        reviewService.updateReview(userId, 1L, request, null);
+
+        // Then
+        // (3.0 * 1 - 3.0 + 5.0) / 1 = 5.0
+        assertThat(restaurant.getAverageRating()).isEqualTo(5.0);
     }
 
     @Test
