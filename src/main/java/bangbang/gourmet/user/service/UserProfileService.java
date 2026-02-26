@@ -36,6 +36,20 @@ public class UserProfileService {
         return ProfileResponseDto.from(user, followerCount, followingCount, 0);
     }
 
+    public ProfileResponseDto getUserProfile(Long requesterId, Long targetUserId){
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        long followerCount = followRepository.countFollowingsByFollowerId(targetUserId);
+        long followingCount = followRepository.countFollowersByFollowingId(targetUserId);
+
+        User requester = userRepository.findById(requesterId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+        boolean isFollowing = followRepository.existsByFollowerAndFollowing(requester, target);
+
+        return ProfileResponseDto.from(target, followerCount, followingCount, 0, isFollowing);
+    }
+
     @Transactional
     public void updateProfileInfo(Long userId, ProfileUpdateDto dto){
         User user = userRepository.findById(userId)

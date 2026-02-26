@@ -21,10 +21,16 @@ public class UserProfileController {
 
     private final UserProfileService userProfileService;
 
-    // 프로필 조회
+    // 내 프로필 조회
     @GetMapping("/me")
     public Response<ProfileResponseDto> getProfile(@UserId Long userId){
         return Response.success(SuccessCode.SUCCESS, userProfileService.getProfile(userId));
+    }
+
+    // 다른 유저 프로필 조회
+    @GetMapping("/{targetUserId}")
+    public Response<ProfileResponseDto> getUserProfile(@UserId Long userId, @PathVariable Long targetUserId){
+        return Response.success(SuccessCode.SUCCESS, userProfileService.getUserProfile(userId, targetUserId));
     }
 
     @PatchMapping("/me/info")
