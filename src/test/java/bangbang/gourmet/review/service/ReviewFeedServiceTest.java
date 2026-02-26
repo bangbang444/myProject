@@ -114,7 +114,9 @@ class ReviewFeedServiceTest {
                 .user(author)
                 .restaurant(restaurant)
                 .content("맛있어요!")
-                .rating(4.5)
+                .tasteRating(4.5)
+                .atmosphereRating(4.5)
+                .serviceRating(4.5)
                 .build();
         ReflectionTestUtils.setField(review, "id", 1000L);
         ReflectionTestUtils.setField(review, "createdDate", LocalDateTime.of(2024, 1, 1, 12, 0));

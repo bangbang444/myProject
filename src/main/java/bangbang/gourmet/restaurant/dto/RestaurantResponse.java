@@ -1,5 +1,7 @@
 package bangbang.gourmet.restaurant.dto;
 
+import bangbang.gourmet.common.util.RatingUtils;
+
 public record RestaurantResponse(
         Long id,
         String name,
@@ -12,7 +14,7 @@ public record RestaurantResponse(
     public RestaurantResponse {
         // 소수점 첫째 자리까지 반올림 처리 (예: 0.52 -> 0.5)
         if (distance != null) {
-            distance = Math.round(distance * 10) / 10.0;
+            distance = RatingUtils.roundToOneDecimal(distance);
         }
     }
 }

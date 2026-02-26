@@ -8,11 +8,13 @@ import java.util.List;
 
 public record ReviewResponse(
         Long reviewId,
-        String nickname, // 작성자
-        Double rating,
+        String nickname,
+        Double tasteRating,
+        Double atmosphereRating,
+        Double serviceRating,
         String content,
-        List<ReviewImageDetail> images, // 리뷰 이미지 리스트
-        LocalDateTime createdAt // ??
+        List<ReviewImageDetail> images,
+        LocalDateTime createdAt
 ) {
     public record ReviewImageDetail(
             Long imageId,
@@ -27,7 +29,9 @@ public record ReviewResponse(
         return new ReviewResponse(
                 review.getId(),
                 review.getUser().getNickname(),
-                review.getRating(),
+                review.getTasteRating(),
+                review.getAtmosphereRating(),
+                review.getServiceRating(),
                 review.getContent(),
                 review.getImages().stream()
                         .map(ReviewImageDetail::from)

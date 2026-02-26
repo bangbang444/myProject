@@ -30,7 +30,13 @@ public class Review extends BaseEntity {
     private User user;
 
     @Column(nullable = false)
-    private Double rating;   // UI: 5.0, 4.0 등
+    private Double tasteRating;
+
+    @Column(nullable = false)
+    private Double atmosphereRating;
+
+    @Column(nullable = false)
+    private Double serviceRating;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;  // 리뷰 본문
@@ -40,11 +46,17 @@ public class Review extends BaseEntity {
     private final List<ReviewImage> images = new ArrayList<>();
 
     @Builder
-    public Review(Restaurant restaurant, User user, Double rating, String content) {
+    public Review(Restaurant restaurant, User user, Double tasteRating, Double atmosphereRating, Double serviceRating, String content) {
         this.restaurant = restaurant;
         this.user = user;
-        this.rating = rating;
+        this.tasteRating = tasteRating;
+        this.atmosphereRating = atmosphereRating;
+        this.serviceRating = serviceRating;
         this.content = content;
+    }
+
+    public Double getAverageRating() {
+        return (tasteRating + atmosphereRating + serviceRating) / 3.0;
     }
 
     public void addReviewImage(String imageUrl) {
@@ -52,8 +64,10 @@ public class Review extends BaseEntity {
         this.images.add(reviewImage);
     }
 
-    public void update(String content, Double rating){
+    public void update(String content, Double tasteRating, Double atmosphereRating, Double serviceRating) {
         this.content = content;
-        this.rating = rating;
+        this.tasteRating = tasteRating;
+        this.atmosphereRating = atmosphereRating;
+        this.serviceRating = serviceRating;
     }
 }

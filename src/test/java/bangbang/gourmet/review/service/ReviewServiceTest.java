@@ -47,7 +47,7 @@ class ReviewServiceTest {
     @Test
     @DisplayName("리뷰를 등록하면 식당의 평점과 리뷰 개수가 갱신되어야 한다")
     void createReview_UpdatesRestaurantStats() {
-        // given (준비)
+        // given
         Long restaurantId = 1L;
         Long userId = 1L;
 
@@ -59,29 +59,26 @@ class ReviewServiceTest {
                 .build();
 
         User user = User.builder().nickname("jason").build();
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "정말 맛있어요!");
+        // 맛 5.0, 분위기 5.0, 서비스 5.0 -> 평균 5.0
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "정말 맛있어요!");
 
-        // 가짜 이미지 파일
         MockMultipartFile image = new MockMultipartFile("images", "test.jpg", "image/jpeg", "test".getBytes());
         List<MultipartFile> images = List.of(image);
 
-        // Mock 동작 정의
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("https://s3.url/test.jpg");
-
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(reviewImageRepository.saveAll(anyList())).willReturn(List.of());
 
-        // when (실행)
+        // when
         reviewService.createReview(restaurantId, userId, request, images);
 
-        // then (검증)
-        // 1. 평점 계산 검증: (4.0 * 1 + 5.0) / 2 = 4.5
+        // then
+        // 평점 계산 검증: (4.0 * 1 + 5.0) / 2 = 4.5
         assertThat(restaurant.getReviewCount()).isEqualTo(2);
         assertThat(restaurant.getAverageRating()).isEqualTo(4.5);
 
-        // 2. 저장 메서드 호출 횟수 검증
         verify(reviewRepository, times(1)).save(any(Review.class));
         verify(reviewImageRepository, times(1)).saveAll(anyList());
         verify(s3Service, times(1)).uploadImage(any(), eq("sns"), eq("reviews"));
@@ -90,72 +87,68 @@ class ReviewServiceTest {
     @Test
     @DisplayName("이미지가 없는 리뷰를 등록해도 정상적으로 저장되어야 한다")
     void createReview_WithoutImages() {
-        // 💡 1. ID 및 가짜 엔티티 준비
         Long restaurantId = 1L;
         Long userId = 1L;
         Restaurant restaurant = Restaurant.builder().averageRating(0.0).reviewCount(0).build();
         User user = User.builder().nickname("jason").build();
 
-        // 💡 2. Mock 동작 정의 (이게 있어야 Service 안의 findById가 null을 안 뱉음)
         given(restaurantRepository.findById(restaurantId)).willReturn(Optional.of(restaurant));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        // given
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, "글만 있는 리뷰");
-        List<MultipartFile> images = List.of(); // 빈 리스트
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "글만 있는 리뷰");
+        List<MultipartFile> images = List.of();
 
         // when
         reviewService.createReview(restaurantId, userId, request, images);
 
         // then
         verify(reviewImageRepository, times(0)).saveAll(anyList());
-        assertThat(restaurant.getReviewCount()).isEqualTo(1); // 0개에서 1개로 증가했는지도 확인!
+        assertThat(restaurant.getReviewCount()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("식당 ID로 리뷰 목록을 조회하면 이미지 URL을 포함한 DTO 리스트가 반환되어야 한다")
     void getReviews_ReturnsReviewResponseList() {
-        // given (준비)
+        // given
         Long restaurantId = 1L;
 
-        // 1. 가짜 유저 및 식당 생성
         User user = User.builder().nickname("jason").build();
         Restaurant restaurant = Restaurant.builder().build();
-        ReflectionTestUtils.setField(restaurant, "restaurantId", restaurantId); // 식당 ID 주입
+        ReflectionTestUtils.setField(restaurant, "restaurantId", restaurantId);
 
-        // 2. 가짜 리뷰 생성 및 ID 주입
         Review review = Review.builder()
                 .user(user)
                 .restaurant(restaurant)
-                .rating(4.5)
+                .tasteRating(4.0)
+                .atmosphereRating(5.0)
+                .serviceRating(4.5)
                 .content("정말 맛있어요!")
                 .build();
         ReflectionTestUtils.setField(review, "images", new ArrayList<ReviewImage>());
-        ReflectionTestUtils.setField(review, "id", 100L); // 리뷰 ID 주입
+        ReflectionTestUtils.setField(review, "id", 100L);
 
-        // 3. 리뷰 이미지 생성 및 연결
         review.addReviewImage("https://s3.url/image1.jpg");
         review.addReviewImage("https://s3.url/image2.jpg");
 
-        // 가짜 id 삽입
         for (int i = 0; i < review.getImages().size(); i++) {
             ReflectionTestUtils.setField(review.getImages().get(i), "id", (long) (i + 1));
         }
 
         List<Review> reviews = List.of(review);
 
-        // Mock 동작 정의
         given(reviewRepository.findAllByRestaurantIdWithImages(restaurantId)).willReturn(reviews);
 
-        // when (실행)
+        // when
         List<ReviewResponse> result = reviewService.getReviews(restaurantId);
 
-        // then (검증)
+        // then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).reviewId()).isEqualTo(100L); // ID 검증 추가
+        assertThat(result.get(0).reviewId()).isEqualTo(100L);
         assertThat(result.get(0).nickname()).isEqualTo("jason");
-        assertThat(result.get(0).rating()).isEqualTo(4.5);
+        assertThat(result.get(0).tasteRating()).isEqualTo(4.0);
+        assertThat(result.get(0).atmosphereRating()).isEqualTo(5.0);
+        assertThat(result.get(0).serviceRating()).isEqualTo(4.5);
 
         List<String> extractedUrls = result.get(0).images().stream()
                 .map(ReviewResponse.ReviewImageDetail::imageUrl)
@@ -167,14 +160,13 @@ class ReviewServiceTest {
         );
         assertThat(result.get(0).images().get(0).imageId()).isNotNull();
 
-        // Repository 메서드가 호출되었는지 확인
         verify(reviewRepository, times(1)).findAllByRestaurantIdWithImages(restaurantId);
     }
 
     @Test
     @DisplayName("리뷰 수정 성공 테스트 - 텍스트 수정 및 이미지 추가/삭제")
     void updateReview_Success() {
-        // 💡 1. 준비 (Given)
+        // given
         Long userId = 1L;
         Long reviewId = 100L;
 
@@ -183,7 +175,6 @@ class ReviewServiceTest {
                 .reviewCount(1)
                 .build();
 
-        // 가짜 유저와 기존 리뷰 생성
         User user = User.builder().build();
         ReflectionTestUtils.setField(user, "id", userId);
 
@@ -191,11 +182,12 @@ class ReviewServiceTest {
                 .user(user)
                 .restaurant(restaurant)
                 .content("원래 내용")
-                .rating(3.0)
+                .tasteRating(3.0)
+                .atmosphereRating(3.0)
+                .serviceRating(3.0)
                 .build();
         ReflectionTestUtils.setField(review, "id", reviewId);
 
-        // 삭제할 가짜 이미지들 생성 (ID 10)
         ReviewImage img1 = ReviewImage.builder()
                 .imageUrl("old-image-url.jpg")
                 .review(review)
@@ -203,37 +195,37 @@ class ReviewServiceTest {
         ReflectionTestUtils.setField(img1, "id", 10L);
         review.getImages().add(img1);
 
-        // 리뷰의 이미지 리스트에 추가 (양방향 연결)
-        ReviewUpdateRequest request = new ReviewUpdateRequest("수정된 내용", 5.0, List.of(10L));
+        // 맛 5.0, 분위기 5.0, 서비스 5.0 -> 평균 5.0
+        ReviewUpdateRequest request = new ReviewUpdateRequest("수정된 내용", 5.0, 5.0, 5.0, List.of(10L));
 
         MockMultipartFile newImage = new MockMultipartFile("newImages", "new.jpg", "image/jpeg", "content".getBytes());
         List<MultipartFile> newImages = List.of(newImage);
 
-        // Mock 설정
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
         given(reviewImageRepository.findAllById(anyList())).willReturn(List.of(img1));
         given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("new-key.jpg");
 
-        // 💡 2. 실행 (When)
+        // when
         reviewService.updateReview(userId, reviewId, request, newImages);
 
-        // 💡 3. 검증 (Then)
-        // 텍스트 및 평점 수정 확인 (더티 체킹)
+        // then
         assertThat(review.getContent()).isEqualTo("수정된 내용");
-        assertThat(review.getRating()).isEqualTo(5.0);
+        assertThat(review.getTasteRating()).isEqualTo(5.0);
+        assertThat(review.getAtmosphereRating()).isEqualTo(5.0);
+        assertThat(review.getServiceRating()).isEqualTo(5.0);
 
-        verify(s3Service, times(1)).delete(anyString(), anyString()); // S3 삭제 호출 확인
-        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList()); // DB 삭제 호출 확인
-        verify(reviewImageRepository, times(1)).saveAll(anyList()); // 새 이미지 저장 확인
+        verify(s3Service, times(1)).delete(anyString(), anyString());
+        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList());
+        verify(reviewImageRepository, times(1)).saveAll(anyList());
     }
 
     @Test
     @DisplayName("리뷰 수정 시 식당의 평균 평점이 갱신되는지 확인한다")
     void updateReview_UpdateRestaurantRating() {
-        // Given
+        // given
         Long userId = 1L;
 
-        // 식당 생성 (기존 평점 3.0, 리뷰 개수 1개라고 가정)
+        // 기존 평점 3.0 (맛 3.0, 분위기 3.0, 서비스 3.0 -> 평균 3.0), 리뷰 1개
         Restaurant restaurant = Restaurant.builder()
                 .averageRating(3.0)
                 .reviewCount(1)
@@ -242,22 +234,23 @@ class ReviewServiceTest {
         User user = User.builder().build();
         ReflectionTestUtils.setField(user, "id", userId);
 
-        // 기존 리뷰 (평점 3.0)
         Review review = Review.builder()
                 .user(user)
                 .restaurant(restaurant)
-                .rating(3.0)
+                .tasteRating(3.0)
+                .atmosphereRating(3.0)
+                .serviceRating(3.0)
                 .build();
 
         given(reviewRepository.findById(anyLong())).willReturn(Optional.of(review));
 
-        // 평점을 5.0으로 수정하는 요청
-        ReviewUpdateRequest request = new ReviewUpdateRequest("내용", 5.0, null);
+        // 맛 5.0, 분위기 5.0, 서비스 5.0 -> 평균 5.0으로 수정
+        ReviewUpdateRequest request = new ReviewUpdateRequest("내용", 5.0, 5.0, 5.0, null);
 
-        // When
+        // when
         reviewService.updateReview(userId, 1L, request, null);
 
-        // Then
+        // then
         // (3.0 * 1 - 3.0 + 5.0) / 1 = 5.0
         assertThat(restaurant.getAverageRating()).isEqualTo(5.0);
     }
@@ -265,47 +258,43 @@ class ReviewServiceTest {
     @Test
     @DisplayName("리뷰 삭제 성공 테스트 - 식당 통계 반영 및 이미지/리뷰 삭제")
     void deleteReview_Success() {
-        // 💡 1. 준비 (Given)
+        // given
         Long userId = 1L;
         Long reviewId = 100L;
 
-        // 가짜 유저 생성
         User user = User.builder().build();
         ReflectionTestUtils.setField(user, "id", userId);
 
-        // 가짜 식당 생성 (리뷰 2개, 평점 4.5점 가정)
+        // 식당 리뷰 2개, 평점 4.5 가정
         Restaurant restaurant = Restaurant.builder()
                 .averageRating(4.5)
                 .reviewCount(2)
                 .build();
 
-        // 삭제할 리뷰 생성 (평점 5.0점)
+        // 삭제할 리뷰: 맛 5.0, 분위기 5.0, 서비스 5.0 -> 평균 5.0
         Review review = Review.builder()
                 .user(user)
                 .restaurant(restaurant)
-                .rating(5.0)
+                .tasteRating(5.0)
+                .atmosphereRating(5.0)
+                .serviceRating(5.0)
                 .build();
         ReflectionTestUtils.setField(review, "id", reviewId);
 
-        // 삭제될 이미지 하나 추가
         ReviewImage img1 = ReviewImage.builder().imageUrl("delete-me.jpg").review(review).build();
         review.getImages().add(img1);
 
-        // Mock 동작 정의
         given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
 
-        // 💡 2. 실행 (When)
+        // when
         reviewService.deleteReview(userId, reviewId);
 
-        // 💡 3. 검증 (Then)
-        // 식당 통계 검증: (4.5 * 2 - 5.0) / 1 = 4.0
+        // then
+        // (4.5 * 2 - 5.0) / 1 = 4.0
         assertThat(restaurant.getReviewCount()).isEqualTo(1);
         assertThat(restaurant.getAverageRating()).isEqualTo(4.0);
 
-        // S3 삭제 호출 확인
         verify(s3Service, times(1)).delete(anyString(), eq("delete-me.jpg"));
-
-        // DB 삭제 호출 확인
         verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList());
         verify(reviewRepository, times(1)).delete(any(Review.class));
     }
