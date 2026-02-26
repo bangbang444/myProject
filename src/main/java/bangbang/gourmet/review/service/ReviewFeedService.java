@@ -4,7 +4,6 @@ import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Review;
-import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.social.repository.FollowRepository;

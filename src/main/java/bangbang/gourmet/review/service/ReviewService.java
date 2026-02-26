@@ -4,7 +4,6 @@ import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.ForbiddenException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
-import bangbang.gourmet.global.s3.S3Buckets;
 import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
@@ -22,10 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static bangbang.gourmet.global.s3.S3Buckets.*;
+import static bangbang.gourmet.global.s3.S3Buckets.REVIEWS;
+import static bangbang.gourmet.global.s3.S3Buckets.SNS;
 
 @Service
 @RequiredArgsConstructor
