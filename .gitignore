@@ -44,3 +44,5 @@ out/
 CLAUDE.md
 # Windows Null Device redirection garbage file
 NUL
+
+/skills/*
