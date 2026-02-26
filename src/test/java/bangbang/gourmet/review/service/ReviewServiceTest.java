@@ -22,6 +22,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -130,11 +131,17 @@ class ReviewServiceTest {
                 .rating(4.5)
                 .content("정말 맛있어요!")
                 .build();
+        ReflectionTestUtils.setField(review, "images", new ArrayList<ReviewImage>());
         ReflectionTestUtils.setField(review, "id", 100L); // 리뷰 ID 주입
 
         // 3. 리뷰 이미지 생성 및 연결
         review.addReviewImage("https://s3.url/image1.jpg");
         review.addReviewImage("https://s3.url/image2.jpg");
+
+        // 가짜 id 삽입
+        for (int i = 0; i < review.getImages().size(); i++) {
+            ReflectionTestUtils.setField(review.getImages().get(i), "id", (long) (i + 1));
+        }
 
         List<Review> reviews = List.of(review);
 
@@ -171,12 +178,18 @@ class ReviewServiceTest {
         Long userId = 1L;
         Long reviewId = 100L;
 
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(3.0)
+                .reviewCount(1)
+                .build();
+
         // 가짜 유저와 기존 리뷰 생성
         User user = User.builder().build();
         ReflectionTestUtils.setField(user, "id", userId);
 
         Review review = Review.builder()
                 .user(user)
+                .restaurant(restaurant)
                 .content("원래 내용")
                 .rating(3.0)
                 .build();
