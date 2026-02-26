@@ -94,11 +94,11 @@ public class ReviewService {
 
         // 2. 평점 및 식당 통계 업데이트
         Double oldAvgRating = review.getAverageRating();
-        Double newAvgRating = (request.tasteRating() + request.atmosphereRating() + request.serviceRating()) / 3.0;
+        review.update(request.content(), request.tasteRating(), request.atmosphereRating(), request.serviceRating());
+        Double newAvgRating = review.getAverageRating();
         if (!oldAvgRating.equals(newAvgRating)) {
             review.getRestaurant().updateReviewRating(oldAvgRating, newAvgRating);
         }
-        review.update(request.content(), request.tasteRating(), request.atmosphereRating(), request.serviceRating());
 
         // 3. 이미지 삭제 처리 (직접 삭제)
         if (request.deleteImageIds() != null && !request.deleteImageIds().isEmpty()) {
