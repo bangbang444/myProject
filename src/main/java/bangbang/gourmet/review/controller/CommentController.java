@@ -16,22 +16,22 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-    @RequestMapping("/api/comments")
-    public class CommentController {
-        private final CommentService commentService;
+@RequestMapping("/api")
+public class CommentController {
+    private final CommentService commentService;
 
-        // 1. 댓글 작성
-        @PostMapping("/reviews/{reviewId}")
-        public Response<CommentCreateResponse> createComment(
-                @PathVariable Long reviewId,
-                @UserId Long userId,
-                @RequestBody CommentCreateRequest request
-        ) {
-            return Response.success(SuccessCode.SUCCESS, commentService.createComment(userId, reviewId, request.content()));
-        }
+    // 1. 댓글 작성
+    @PostMapping("/reviews/{reviewId}/comments")
+    public Response<CommentCreateResponse> createComment(
+            @PathVariable Long reviewId,
+            @UserId Long userId,
+            @RequestBody CommentCreateRequest request
+    ) {
+        return Response.success(SuccessCode.SUCCESS, commentService.createComment(userId, reviewId, request.content()));
+    }
 
     // 2. 댓글 목록 조회
-    @GetMapping("/reviews/{reviewId}")
+    @GetMapping("/reviews/{reviewId}/comments")
     public Response<List<CommentResponse>> getComments(
             @PathVariable Long reviewId,
             @UserId Long userId
@@ -40,7 +40,7 @@ import java.util.List;
         return Response.success(SuccessCode.SUCCESS, comments);
     }
 
-    @PatchMapping("/{commentId}")
+    @PatchMapping("/comments/{commentId}")
     public Response<Void> updateComment(
             @UserId Long userId,
             @PathVariable Long commentId,
@@ -51,7 +51,7 @@ import java.util.List;
         return Response.success(SuccessCode.SUCCESS, null);
     }
 
-    @DeleteMapping("/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public Response<Void> deleteComment(
             @UserId Long userId,
             @PathVariable Long commentId

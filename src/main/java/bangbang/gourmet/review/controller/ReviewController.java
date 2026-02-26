@@ -40,7 +40,7 @@ public class ReviewController {
     public Response<Void> updateReview(
             @UserId Long userId,
             @PathVariable Long reviewId,
-            @RequestPart(value = "request") ReviewUpdateRequest request,
+            @RequestPart(value = "request") @Valid ReviewUpdateRequest request,
             @RequestPart(value = "newImages", required = false) List<MultipartFile> newImages
     ) {
         reviewService.updateReview(userId, reviewId, request, newImages);
