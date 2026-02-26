@@ -88,10 +88,10 @@ public class RestaurantService {
                 .map(r -> new ReviewSimpleResponse(
                         r.getId(),
                         r.getUser().getNickname(),
-                        r.getRating() != null ? Math.round(r.getRating() * 10) / 10.0 : 0.0,
+                        Math.round(r.getAverageRating() * 10) / 10.0,
                         r.getContent(),
                         r.getImages().stream().map(ReviewImage::getImageUrl).toList(),
-                        formatCreatedAt(r.getCreatedDate()) // 날짜 가공
+                        formatCreatedAt(r.getCreatedDate())
                 )).toList();
 
 
