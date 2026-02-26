@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.global.s3.S3Service;
@@ -34,6 +35,24 @@ public class UserProfileService {
         long followingCount = followRepository.countFollowersByFollowingId(userId);
 
         return ProfileResponseDto.from(user, followerCount, followingCount, 0);
+    }
+
+    public ProfileResponseDto getUserProfile(Long requesterId, Long targetUserId){
+        if (requesterId.equals(targetUserId)) {
+            throw new BadRequestException(ErrorCode.CANNOT_FOLLOW_SELF);
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+
+        long followerCount = followRepository.countFollowingsByFollowerId(targetUserId);
+        long followingCount = followRepository.countFollowersByFollowingId(targetUserId);
+
+        User requester = userRepository.findById(requesterId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
+        boolean isFollowing = followRepository.existsByFollowerAndFollowing(requester, target);
+
+        return ProfileResponseDto.from(target, followerCount, followingCount, 0, isFollowing);
     }
 
     @Transactional

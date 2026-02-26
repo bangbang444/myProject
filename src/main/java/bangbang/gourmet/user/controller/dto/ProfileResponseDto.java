@@ -9,7 +9,8 @@ public record ProfileResponseDto(
      String profileImageKey,
      long followerCount,
      long followingCount,
-     long postCount
+     long postCount,
+     boolean isFollowing
 ) {
     public static ProfileResponseDto from(User user, long followerCount, long followingCount, long postCount) {
         return new ProfileResponseDto(
@@ -19,7 +20,21 @@ public record ProfileResponseDto(
                 user.getProfileImageKey(),
                 followerCount,
                 followingCount,
-                postCount
+                postCount,
+                false
+        );
+    }
+
+    public static ProfileResponseDto from(User user, long followerCount, long followingCount, long postCount, boolean isFollowing) {
+        return new ProfileResponseDto(
+                user.getId(),
+                user.getNickname(),
+                user.getBio(),
+                user.getProfileImageKey(),
+                followerCount,
+                followingCount,
+                postCount,
+                isFollowing
         );
     }
 }
