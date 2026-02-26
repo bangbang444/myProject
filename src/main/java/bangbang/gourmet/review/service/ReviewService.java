@@ -7,9 +7,11 @@ import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
+import bangbang.gourmet.common.util.RatingUtils;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
 import bangbang.gourmet.review.dto.ReviewUpdateRequest;
+import bangbang.gourmet.review.dto.UserReviewStats;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static bangbang.gourmet.global.s3.S3Buckets.REVIEWS;
 import static bangbang.gourmet.global.s3.S3Buckets.SNS;
@@ -77,8 +81,24 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviews(Long restaurantId) {
         List<Review> reviews = reviewRepository.findAllByRestaurantIdWithImages(restaurantId);
+
+        List<Long> userIds = reviews.stream()
+                .map(r -> r.getUser().getId())
+                .distinct()
+                .toList();
+
+        Map<Long, UserReviewStats> statsMap = reviewRepository.findUserReviewStatsByUserIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(UserReviewStats::userId, s -> s));
+
         return reviews.stream()
-                .map(ReviewResponse::from)
+                .map(review -> {
+                    UserReviewStats stats = statsMap.getOrDefault(
+                            review.getUser().getId(),
+                            new UserReviewStats(review.getUser().getId(), 0L, 0.0)
+                    );
+                    return ReviewResponse.of(review, stats.reviewCount(), RatingUtils.roundToOneDecimal(stats.averageRating()));
+                })
                 .toList();
     }
 

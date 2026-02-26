@@ -1,5 +1,6 @@
 package bangbang.gourmet.review.repository;
 
+import bangbang.gourmet.review.dto.UserReviewStats;
 import bangbang.gourmet.review.entity.Review;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,4 +33,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "where r.user.id in :userIds " + // 넘겨받은 팔로잉 ID 리스트에 포함된 것만!
             "order by r.createdDate desc")
     List<Review> findAllByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Query("select new bangbang.gourmet.review.dto.UserReviewStats(r.user.id, COUNT(r), AVG((r.tasteRating + r.atmosphereRating + r.serviceRating) / 3.0)) " +
+            "from Review r " +
+            "where r.user.id in :userIds " +
+            "group by r.user.id")
+    List<UserReviewStats> findUserReviewStatsByUserIds(@Param("userIds") List<Long> userIds);
 }
