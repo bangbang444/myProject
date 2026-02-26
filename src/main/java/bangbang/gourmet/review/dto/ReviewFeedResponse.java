@@ -1,5 +1,6 @@
 package bangbang.gourmet.review.dto;
 
+import bangbang.gourmet.common.util.RatingUtils;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.entity.ReviewImage;
 
@@ -30,7 +31,7 @@ public record ReviewFeedResponse(
                 review.getUser().getNickname(),
                 null, // TODO: User의 profileImageKey를 이용해 전체 URL을 생성하는 로직 구현 필요
                 review.getContent(),
-                Math.round(review.getAverageRating() * 10) / 10.0,
+                RatingUtils.roundToOneDecimal(review.getAverageRating()),
                 review.getImages().stream()
                         .map(ReviewImage::getImageUrl)
                         .toList(),

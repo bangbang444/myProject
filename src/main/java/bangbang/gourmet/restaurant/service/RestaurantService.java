@@ -1,5 +1,6 @@
 package bangbang.gourmet.restaurant.service;
 
+import bangbang.gourmet.common.util.RatingUtils;
 import bangbang.gourmet.restaurant.dto.MenuResponse;
 import bangbang.gourmet.restaurant.dto.OperatingHourResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantDetailResponse;
@@ -88,7 +89,7 @@ public class RestaurantService {
                 .map(r -> new ReviewSimpleResponse(
                         r.getId(),
                         r.getUser().getNickname(),
-                        Math.round(r.getAverageRating() * 10) / 10.0,
+                        RatingUtils.roundToOneDecimal(r.getAverageRating()),
                         r.getContent(),
                         r.getImages().stream().map(ReviewImage::getImageUrl).toList(),
                         formatCreatedAt(r.getCreatedDate())
@@ -135,7 +136,7 @@ public class RestaurantService {
                 lastOrder,
                 isOpen,
                 operatingHours,
-                Math.round(restaurant.getAverageRating() * 10) / 10.0,
+                RatingUtils.roundToOneDecimal(restaurant.getAverageRating()),
                 restaurant.getReviewCount(),
                 reviewResponses,
                 restaurant.getImageUrls().stream().map(RestaurantImage::getImageUrl).toList(),
