@@ -1,5 +1,6 @@
 package bangbang.gourmet.restaurant.service;
 
+import bangbang.gourmet.restaurant.dto.MenuResponse;
 import bangbang.gourmet.restaurant.dto.OperatingHourResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantDetailResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantResponse;
@@ -102,6 +103,12 @@ public class RestaurantService {
                         oh.getLastOrder() != null ? oh.getLastOrder() : "-"
                 )).toList();
 
+        List<MenuResponse> menuResponse = restaurant.getMenus().stream()
+                .map(menu -> new MenuResponse(
+                        menu.getName(),
+                        menu.getPrice() != null ? menu.getPrice() : "가격 변동"
+                )).toList();
+
         OpeningHour todayInfo = findTodayOpeningHour(restaurant);
 
         String todayOpeningHours = "정보 없음";
@@ -131,7 +138,8 @@ public class RestaurantService {
                 Math.round(restaurant.getAverageRating() * 10) / 10.0,
                 restaurant.getReviewCount(),
                 reviewResponses,
-                restaurant.getImageUrls().stream().map(RestaurantImage::getImageUrl).toList()
+                restaurant.getImageUrls().stream().map(RestaurantImage::getImageUrl).toList(),
+                menuResponse
         );
     }
 

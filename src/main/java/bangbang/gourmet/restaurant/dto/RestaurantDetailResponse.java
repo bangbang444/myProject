@@ -2,7 +2,6 @@ package bangbang.gourmet.restaurant.dto;
 
 import bangbang.gourmet.review.dto.ReviewSimpleResponse;
 
-import java.util.Collections;
 import java.util.List;
 
 public record RestaurantDetailResponse(
@@ -21,5 +20,6 @@ public record RestaurantDetailResponse(
         Double rating,
         Integer reviewCount,
         List<ReviewSimpleResponse> recentReviews,
-        List<String> imageUrls
+        List<String> imageUrls,
+        List<MenuResponse> menuList
 ) {}
