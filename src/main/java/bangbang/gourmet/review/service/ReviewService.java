@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static bangbang.gourmet.global.s3.S3Buckets.REVIEWS;
@@ -93,10 +94,10 @@ public class ReviewService {
 
         return reviews.stream()
                 .map(review -> {
-                    UserReviewStats stats = statsMap.getOrDefault(
-                            review.getUser().getId(),
-                            new UserReviewStats(review.getUser().getId(), 0L, 0.0)
-                    );
+                    UserReviewStats stats = Optional.ofNullable(statsMap.get(review.getUser().getId()))
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "리뷰가 존재하는 사용자의 통계가 없습니다. userId=" + review.getUser().getId()
+                            ));
                     return ReviewResponse.of(review, stats.reviewCount(), RatingUtils.roundToOneDecimal(stats.averageRating()));
                 })
                 .toList();
