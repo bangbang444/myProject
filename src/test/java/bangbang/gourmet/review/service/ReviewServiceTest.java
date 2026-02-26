@@ -5,7 +5,9 @@ import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.RestaurantRepository;
 import bangbang.gourmet.review.dto.ReviewCreateRequest;
 import bangbang.gourmet.review.dto.ReviewResponse;
+import bangbang.gourmet.review.dto.ReviewUpdateRequest;
 import bangbang.gourmet.review.entity.Review;
+import bangbang.gourmet.review.entity.ReviewImage;
 import bangbang.gourmet.review.repository.ReviewImageRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
@@ -20,6 +22,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,11 +131,17 @@ class ReviewServiceTest {
                 .rating(4.5)
                 .content("정말 맛있어요!")
                 .build();
+        ReflectionTestUtils.setField(review, "images", new ArrayList<ReviewImage>());
         ReflectionTestUtils.setField(review, "id", 100L); // 리뷰 ID 주입
 
         // 3. 리뷰 이미지 생성 및 연결
         review.addReviewImage("https://s3.url/image1.jpg");
         review.addReviewImage("https://s3.url/image2.jpg");
+
+        // 가짜 id 삽입
+        for (int i = 0; i < review.getImages().size(); i++) {
+            ReflectionTestUtils.setField(review.getImages().get(i), "id", (long) (i + 1));
+        }
 
         List<Review> reviews = List.of(review);
 
@@ -147,13 +156,157 @@ class ReviewServiceTest {
         assertThat(result.get(0).reviewId()).isEqualTo(100L); // ID 검증 추가
         assertThat(result.get(0).nickname()).isEqualTo("jason");
         assertThat(result.get(0).rating()).isEqualTo(4.5);
-        assertThat(result.get(0).imageUrls()).hasSize(2);
-        assertThat(result.get(0).imageUrls()).contains(
+
+        List<String> extractedUrls = result.get(0).images().stream()
+                .map(ReviewResponse.ReviewImageDetail::imageUrl)
+                .toList();
+        assertThat(extractedUrls).hasSize(2);
+        assertThat(extractedUrls).contains(
                 "https://s3.url/image1.jpg",
                 "https://s3.url/image2.jpg"
         );
+        assertThat(result.get(0).images().get(0).imageId()).isNotNull();
 
         // Repository 메서드가 호출되었는지 확인
         verify(reviewRepository, times(1)).findAllByRestaurantIdWithImages(restaurantId);
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 성공 테스트 - 텍스트 수정 및 이미지 추가/삭제")
+    void updateReview_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long reviewId = 100L;
+
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(3.0)
+                .reviewCount(1)
+                .build();
+
+        // 가짜 유저와 기존 리뷰 생성
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .content("원래 내용")
+                .rating(3.0)
+                .build();
+        ReflectionTestUtils.setField(review, "id", reviewId);
+
+        // 삭제할 가짜 이미지들 생성 (ID 10)
+        ReviewImage img1 = ReviewImage.builder()
+                .imageUrl("old-image-url.jpg")
+                .review(review)
+                .build();
+        ReflectionTestUtils.setField(img1, "id", 10L);
+        review.getImages().add(img1);
+
+        // 리뷰의 이미지 리스트에 추가 (양방향 연결)
+        ReviewUpdateRequest request = new ReviewUpdateRequest("수정된 내용", 5.0, List.of(10L));
+
+        MockMultipartFile newImage = new MockMultipartFile("newImages", "new.jpg", "image/jpeg", "content".getBytes());
+        List<MultipartFile> newImages = List.of(newImage);
+
+        // Mock 설정
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+        given(reviewImageRepository.findAllById(anyList())).willReturn(List.of(img1));
+        given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("new-key.jpg");
+
+        // 💡 2. 실행 (When)
+        reviewService.updateReview(userId, reviewId, request, newImages);
+
+        // 💡 3. 검증 (Then)
+        // 텍스트 및 평점 수정 확인 (더티 체킹)
+        assertThat(review.getContent()).isEqualTo("수정된 내용");
+        assertThat(review.getRating()).isEqualTo(5.0);
+
+        verify(s3Service, times(1)).delete(anyString(), anyString()); // S3 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList()); // DB 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).saveAll(anyList()); // 새 이미지 저장 확인
+    }
+
+    @Test
+    @DisplayName("리뷰 수정 시 식당의 평균 평점이 갱신되는지 확인한다")
+    void updateReview_UpdateRestaurantRating() {
+        // Given
+        Long userId = 1L;
+
+        // 식당 생성 (기존 평점 3.0, 리뷰 개수 1개라고 가정)
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(3.0)
+                .reviewCount(1)
+                .build();
+
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        // 기존 리뷰 (평점 3.0)
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(3.0)
+                .build();
+
+        given(reviewRepository.findById(anyLong())).willReturn(Optional.of(review));
+
+        // 평점을 5.0으로 수정하는 요청
+        ReviewUpdateRequest request = new ReviewUpdateRequest("내용", 5.0, null);
+
+        // When
+        reviewService.updateReview(userId, 1L, request, null);
+
+        // Then
+        // (3.0 * 1 - 3.0 + 5.0) / 1 = 5.0
+        assertThat(restaurant.getAverageRating()).isEqualTo(5.0);
+    }
+
+    @Test
+    @DisplayName("리뷰 삭제 성공 테스트 - 식당 통계 반영 및 이미지/리뷰 삭제")
+    void deleteReview_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long reviewId = 100L;
+
+        // 가짜 유저 생성
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        // 가짜 식당 생성 (리뷰 2개, 평점 4.5점 가정)
+        Restaurant restaurant = Restaurant.builder()
+                .averageRating(4.5)
+                .reviewCount(2)
+                .build();
+
+        // 삭제할 리뷰 생성 (평점 5.0점)
+        Review review = Review.builder()
+                .user(user)
+                .restaurant(restaurant)
+                .rating(5.0)
+                .build();
+        ReflectionTestUtils.setField(review, "id", reviewId);
+
+        // 삭제될 이미지 하나 추가
+        ReviewImage img1 = ReviewImage.builder().imageUrl("delete-me.jpg").review(review).build();
+        review.getImages().add(img1);
+
+        // Mock 동작 정의
+        given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+
+        // 💡 2. 실행 (When)
+        reviewService.deleteReview(userId, reviewId);
+
+        // 💡 3. 검증 (Then)
+        // 식당 통계 검증: (4.5 * 2 - 5.0) / 1 = 4.0
+        assertThat(restaurant.getReviewCount()).isEqualTo(1);
+        assertThat(restaurant.getAverageRating()).isEqualTo(4.0);
+
+        // S3 삭제 호출 확인
+        verify(s3Service, times(1)).delete(anyString(), eq("delete-me.jpg"));
+
+        // DB 삭제 호출 확인
+        verify(reviewImageRepository, times(1)).deleteAllInBatch(anyList());
+        verify(reviewRepository, times(1)).delete(any(Review.class));
     }
 }

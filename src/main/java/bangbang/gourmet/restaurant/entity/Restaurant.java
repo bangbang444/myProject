@@ -83,4 +83,27 @@ public class Restaurant extends BaseEntity {
         this.reviewCount++;
         this.averageRating = (totalRating + newRating) / this.reviewCount;
     }
+
+    // TODO: 동시성 해결
+    public void decreaseReviewCount(Double rating) {
+        if (this.reviewCount <= 0) return; // 방어 코드
+
+        // 새로운 평균 = (기존 합계 - 삭제될 점수) / (기존 개수 - 1)
+        if (this.reviewCount == 1) {
+            this.averageRating = 0.0;
+            this.reviewCount = 0;
+        } else {
+            double totalRating = (this.averageRating * this.reviewCount) - rating;
+            this.reviewCount--;
+            this.averageRating = totalRating / this.reviewCount;
+        }
+    }
+
+    // TODO: 동시성 해결
+    public void updateReviewRating(Double oldRating, Double newRating) {
+        if (this.reviewCount <= 0) return;
+
+        double totalRating = (this.averageRating * this.reviewCount) - oldRating + newRating;
+        this.averageRating = totalRating / this.reviewCount;
+    }
 }

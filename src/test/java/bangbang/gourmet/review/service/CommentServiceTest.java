@@ -1,18 +1,19 @@
 package bangbang.gourmet.review.service;
 
+import bangbang.gourmet.common.exception.model.ForbiddenException;
+import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.review.dto.CommentCreateResponse;
 import bangbang.gourmet.review.dto.CommentResponse;
+import bangbang.gourmet.review.dto.CommentUpdateRequest;
 import bangbang.gourmet.review.entity.Comment;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,9 +24,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
@@ -87,5 +90,103 @@ class CommentServiceTest {
         // then
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).isMine()).isTrue(); // 이 부분이 핵심!
+    }
+
+    @Test
+    @DisplayName("댓글 수정 성공 테스트 - 본인이 작성한 댓글의 내용을 수정한다")
+    void updateComment_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long commentId = 50L;
+
+        // 가짜 유저 생성
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        // 수정 전 댓글 엔티티 생성
+        Comment comment = Comment.builder()
+                .user(user)
+                .content("수정 전 댓글 내용입니다.")
+                .build();
+        ReflectionTestUtils.setField(comment, "id", commentId);
+
+        CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글 내용입니다.");
+
+        // Mock 설정: 리포지토리에서 해당 댓글을 찾았을 때 가짜 댓글 반환
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // 2. 실행 (When)
+        commentService.updateComment(userId, commentId, request);
+
+        // 3. 검증 (Then)
+        assertThat(comment.getContent()).isEqualTo("수정된 댓글 내용입니다.");
+
+        // 추가로 리포지토리 조회가 발생했는지 확인
+        verify(commentRepository, times(1)).findById(commentId);
+    }
+
+    @Test
+    @DisplayName("댓글 수정 실패 - 작성자가 아닌 유저가 수정을 시도하면 예외가 발생한다")
+    void updateComment_Fail_NotOwner() {
+        // Given
+        Long ownerId = 1L;
+        Long hackerId = 999L; // 다른 유저
+        Long commentId = 50L;
+
+        User owner = User.builder().build();
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        User hacker = User.builder().build();
+        ReflectionTestUtils.setField(hacker, "id", hackerId);
+
+        Comment comment = Comment.builder().user(owner).content("원래 내용").build();
+
+        given(userRepository.findById(hackerId)).willReturn(Optional.of(hacker));
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+        CommentUpdateRequest request = new CommentUpdateRequest("해킹 시도!");
+
+        // When & Then
+        assertThatThrownBy(() -> commentService.updateComment(hackerId, commentId, request))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    @DisplayName("댓글 수정 실패 - 존재하지 않는 유저 ID로 요청하면 NotFoundException이 발생한다")
+    void updateComment_Fail_UserNotFound() {
+        // Given
+        Long nonExistUserId = 1234L;
+        given(userRepository.findById(nonExistUserId)).willReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> commentService.updateComment(nonExistUserId, 1L, new CommentUpdateRequest("내용")))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 성공 테스트 - 본인이 작성한 댓글을 삭제한다")
+    void deleteComment_Success() {
+        // 💡 1. 준비 (Given)
+        Long userId = 1L;
+        Long commentId = 50L;
+
+        User user = User.builder().build();
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        Comment comment = Comment.builder().user(user).build();
+        ReflectionTestUtils.setField(comment, "id", commentId);
+
+        // 유저와 댓글이 모두 DB에 있다고 가정
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+
+        // 💡 2. 실행 (When)
+        commentService.deleteComment(userId, commentId);
+
+        // 💡 3. 검증 (Then)
+        // delete가 실제로 호출되었는지 확인
+        verify(commentRepository, times(1)).delete(any(Comment.class));
+        // 유저 조회가 수행되었는지 확인
+        verify(userRepository, times(1)).findById(userId);
     }
 }
