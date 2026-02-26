@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.social.repository.FollowRepository;
@@ -112,6 +113,14 @@ class UserProfileServiceTest {
 
         // then
         assertThat(result.isFollowing()).isFalse();
+    }
+
+    @Test
+    @DisplayName("요청자와 대상 유저가 동일하면 BadRequestException이 발생한다")
+    void getUserProfile_SameUser_ThrowsBadRequest() {
+        // when & then
+        assertThatThrownBy(() -> userProfileService.getUserProfile(1L, 1L))
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

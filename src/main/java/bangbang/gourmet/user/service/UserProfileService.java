@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.service;
 
+import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.global.s3.S3Service;
@@ -37,6 +38,10 @@ public class UserProfileService {
     }
 
     public ProfileResponseDto getUserProfile(Long requesterId, Long targetUserId){
+        if (requesterId.equals(targetUserId)) {
+            throw new BadRequestException(ErrorCode.CANNOT_FOLLOW_SELF);
+        }
+
         User target = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.USER_NOT_FOUND));
 
