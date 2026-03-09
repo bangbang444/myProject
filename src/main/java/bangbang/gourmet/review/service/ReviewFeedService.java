@@ -1,8 +1,12 @@
 package bangbang.gourmet.review.service;
 
 import bangbang.gourmet.common.exception.model.BadRequestException;
+import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.review.dto.FeedDetailCommentResponse;
+import bangbang.gourmet.review.dto.FeedDetailResponse;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
+import bangbang.gourmet.review.entity.Comment;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,5 +55,21 @@ public class ReviewFeedService {
                     return ReviewFeedResponse.of(review, likeCount, commentCount, isLiked);
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FeedDetailResponse getFeedDetail(Long reviewId, Long userId) {
+        Review review = reviewRepository.findByIdWithDetails(reviewId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.REVIEW_NOT_FOUND));
+
+        long likeCount = reviewLikeRepository.countByReview(review);
+        boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(userId, review.getId());
+
+        List<Comment> comments = commentRepository.findAllByReviewWithUserOrderByCreatedDate(review);
+        List<FeedDetailCommentResponse> commentResponses = comments.stream()
+                .map(FeedDetailCommentResponse::from)
+                .collect(Collectors.toList());
+
+        return FeedDetailResponse.of(review, likeCount, isLiked, commentResponses);
     }
 }

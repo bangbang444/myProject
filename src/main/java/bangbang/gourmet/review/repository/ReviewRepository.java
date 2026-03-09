@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -39,4 +40,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "where r.user.id in :userIds " +
             "group by r.user.id")
     List<UserReviewStats> findUserReviewStatsByUserIds(@Param("userIds") List<Long> userIds);
+
+    @Query("select distinct r from Review r " +
+            "join fetch r.user " +
+            "join fetch r.restaurant " +
+            "left join fetch r.images " +
+            "where r.id = :reviewId")
+    Optional<Review> findByIdWithDetails(@Param("reviewId") Long reviewId);
 }
