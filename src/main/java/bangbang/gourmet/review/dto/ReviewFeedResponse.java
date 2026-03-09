@@ -27,7 +27,7 @@ public record ReviewFeedResponse(
                 review.getId(),
                 review.getUser().getId(),
                 review.getRestaurant().getRestaurantName(),
-                review.getRestaurant().getMainCategory().toString(),
+                review.getRestaurant().getMainCategory(),
                 review.getUser().getNickname(),
                 null, // TODO: User의 profileImageKey를 이용해 전체 URL을 생성하는 로직 구현 필요
                 review.getContent(),
