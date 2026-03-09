@@ -31,7 +31,7 @@ public class ReviewController {
         return Response.success(SuccessCode.SUCCESS, reviewService.createReview(restaurantId, userId, request, images));
     }
 
-    @GetMapping("/restaurant/{restaurantId}/")
+    @GetMapping("/restaurant/{restaurantId}")
     public Response<List<ReviewResponse>> getReviews(@PathVariable Long restaurantId) {
         return Response.success(SuccessCode.SUCCESS, reviewService.getReviews(restaurantId));
     }
