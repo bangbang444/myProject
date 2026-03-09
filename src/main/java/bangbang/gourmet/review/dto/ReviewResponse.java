@@ -14,7 +14,9 @@ public record ReviewResponse(
         Double serviceRating,
         String content,
         List<ReviewImageDetail> images,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        long authorReviewCount,
+        Double authorAverageRating
 ) {
     public record ReviewImageDetail(
             Long imageId,
@@ -25,7 +27,7 @@ public record ReviewResponse(
         }
     }
 
-    public static ReviewResponse from(Review review) {
+    public static ReviewResponse of(Review review, long authorReviewCount, Double authorAverageRating) {
         return new ReviewResponse(
                 review.getId(),
                 review.getUser().getNickname(),
@@ -36,7 +38,9 @@ public record ReviewResponse(
                 review.getImages().stream()
                         .map(ReviewImageDetail::from)
                         .toList(),
-                review.getCreatedDate()
+                review.getCreatedDate(),
+                authorReviewCount,
+                authorAverageRating
         );
     }
 }

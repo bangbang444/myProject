@@ -1,5 +1,6 @@
 package bangbang.gourmet.review.repository;
 
+import bangbang.gourmet.review.dto.UserReviewStats;
 import bangbang.gourmet.review.entity.Review;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "left join fetch r.images " +
             "where r.id = :reviewId")
     Optional<Review> findByIdWithDetails(@Param("reviewId") Long reviewId);
+
+    @Query("select new bangbang.gourmet.review.dto.UserReviewStats(r.user.id, COUNT(r), AVG((r.tasteRating + r.atmosphereRating + r.serviceRating) / 3.0)) " +
+            "from Review r " +
+            "where r.user.id in :userIds " +
+            "group by r.user.id")
+    List<UserReviewStats> findUserReviewStatsByUserIds(@Param("userIds") List<Long> userIds);
 }
