@@ -66,9 +66,9 @@ node {
         ]) {
             sshagent(credentials: ["${SSH_AGENT_ID}"]) {
                 sh """
-                ssh -p ${TARGET_PORT} -o StrictHostKeyChecking=no ${TARGET_USER}@${TARGET_HOST} << 'EOF'
-                    sudo docker login -u ${DOCKER_USER} -p ${TOKEN_VALUE}
-                    sudo /usr/bin/sh /home/${TARGET_USER}/gourmet/dev_deploy.sh
+                ssh -p "${TARGET_PORT}" -o StrictHostKeyChecking=no "${TARGET_USER}"@"${TARGET_HOST}" << 'EOF'
+                    echo "${TOKEN_VALUE}" | sudo docker login -u "${DOCKER_USER}" --password-stdin
+                    sudo /usr/bin/sh "/home/${TARGET_USER}/gourmet/dev_deploy.sh"
                     exit
                 EOF
                 """
