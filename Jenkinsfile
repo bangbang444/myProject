@@ -16,10 +16,17 @@ node {
             userRemoteConfigs: [[credentialsId: "GitHubGeneral", url: 'https://github.com/bangbang444/myProject']]
         )
     }
+
+    stage('Test'){
+        sh 'chmod +x gradlew'
+        withCredentials([file(credentialsId: 'TEST_YML', variable: 'TEST_YML_PATH')]){
+            sh 'mkdir -p src/test/resources'
+            sh 'cp $TEST_YML_PATH src/test/resources/application.yml'
+            sh './gradlew clean test'
+        }
+    }
     
     stage('Build') {
-        sh 'chmod +x gradlew'
-        
         withCredentials([
             string(credentialsId: 'DB_PASSWORD', variable: 'DB_PASSWORD'),
             string(credentialsId: 'REDIS_PASSWORD', variable: 'REDIS_PASSWORD'),
@@ -35,7 +42,7 @@ node {
         ]) {
             sh 'mkdir -p src/main/resources'
             sh 'cp $PROD_YML_PATH src/main/resources/application-prod.yml'
-            sh './gradlew clean build -Dspring.profiles.active=prod -x test'
+            sh './gradlew build -Dspring.profiles.active=prod -x test'
         }
     }
     
