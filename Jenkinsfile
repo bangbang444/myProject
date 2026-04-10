@@ -28,16 +28,6 @@ node {
     
     stage('Build') {
         withCredentials([
-            string(credentialsId: 'DB_PASSWORD', variable: 'DB_PASSWORD'),
-            string(credentialsId: 'REDIS_PASSWORD', variable: 'REDIS_PASSWORD'),
-            string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
-            string(credentialsId: 'KAKAO_CLIENT_ID', variable: 'KAKAO_CLIENT_ID'),
-            string(credentialsId: 'KAKAO_CLIENT_SECRET', variable: 'KAKAO_CLIENT_SECRET'),
-            string(credentialsId: 'DB_HOST', variable: 'DB_HOST'),
-            string(credentialsId: 'REDIS_HOST', variable: 'REDIS_HOST'),
-            string(credentialsId: 'DB_NAME', variable: 'DB_NAME'),
-            string(credentialsId: 'DB_USERNAME', variable: 'DB_USERNAME'),
-            string(credentialsId: 'DB_PORT', variable: 'DB_PORT'),
             file(credentialsId: 'PROD_YML', variable: 'PROD_YML_PATH')
         ]) {
             sh 'mkdir -p src/main/resources'
