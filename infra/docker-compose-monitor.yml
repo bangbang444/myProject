@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_TAG}
+    container_name: prometheus
+    ports:
+      - "${HOST_IP}:${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ${MONITORING_CONFIG_DIR}/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: always
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - gourmet-net
+
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_TAG}
+    container_name: node-exporter
+    ports:
+      - "${HOST_IP}:${NODE_EXPORTER_PORT}:9100"
+    networks:
+      - gourmet-net
+    restart: always
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_TAG}
+    container_name: grafana
+    ports:
+      - "${HOST_IP}:${GRAFANA_PORT}:3000"
+    volumes:
+      - ${GRAFANA_DATA}:/var/lib/grafana
+    restart: always
+    networks:
+      - gourmet-net
+
+volumes:
+  prometheus-data:
+    external: true
+
+networks:
+  gourmet-net:
+    external: true

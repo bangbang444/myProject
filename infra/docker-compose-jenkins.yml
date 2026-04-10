@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:${JENKINS_TAG}
+    container_name: jenkins-docker
+    user: ${JENKINS_USER}
+    restart: always
+    ports:
+      - "${HOST_IP}:${JENKINS_PORT}:8080" # 젠킨스 웹 UI, 외부 노출 차단, Nginx에서만 받음
+      - "${HOST_IP}:50000:50000" # 에이전트용
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - gourmet-net
+
+volumes:
+  jenkins_home:
+    external: true
+
+networks:
+  gourmet-net:
+    external: true

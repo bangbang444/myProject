@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  garage:
+    image: dxflrs/garage:${GARAGE_TAG}
+    container_name: garage
+    restart: always
+    ports:
+      - "${HOST_IP}:${GARAGE_S3_PORT}:3900"
+      - "${HOST_IP}:${GARAGE_RPC_PORT}:3901"
+      - "${HOST_IP}:${GARAGE_ADMIN_PORT}:3902"
+    volumes:
+      - ${GARAGE_DIR}/garage.toml:/etc/garage/garage.toml
+      - ${GARAGE_DIR}/meta:/var/lib/garage/meta
+      - ${GARAGE_DIR}/data:/var/lib/garage/data
+    command: ["/garage", "-c", "/etc/garage/garage.toml", "server"]
+    networks:
+      - gourmet-net
+
+networks:
+  gourmet-net:
+    external: true
