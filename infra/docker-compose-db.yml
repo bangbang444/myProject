@@ -1,0 +1,33 @@
+services:
+  mysql:
+    image: mysql:${DB_TAG}
+    container_name: mysql-gourmet
+    restart: always
+    ports:
+      - "${HOST_IP}:${DB_PORT}:3306"
+    networks:
+      - gourmet-net
+    env_file:
+      - ../.env
+    volumes:
+      - ${DB_DATA}:/var/lib/mysql
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: redis-gourmet
+    restart: always
+    ports:
+      - "${HOST_IP}:${REDIS_PORT}:6379"
+    networks:
+      - gourmet-net
+    env_file:
+      - ../.env
+    volumes:
+      - ${REDIS_CONF}:/usr/local/etc/redis/redis.conf
+      - ${REDIS_DATA}:/data
+    command: >
+      sh -c 'redis-server /usr/local/etc/redis/redis.conf --requirepass "${REDIS_PASSWORD}"'
+
+networks:
+  gourmet-net:
+    external: true
