@@ -57,6 +57,8 @@ public class ReviewService {
                 .atmosphereRating(request.atmosphereRating())
                 .serviceRating(request.serviceRating())
                 .content(request.content())
+                .category(request.category())
+                .isPublic(request.isPublic())
                 .build();
 
         Review savedReview = reviewRepository.save(review);

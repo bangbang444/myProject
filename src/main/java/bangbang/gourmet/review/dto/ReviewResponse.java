@@ -13,6 +13,8 @@ public record ReviewResponse(
         Double atmosphereRating,
         Double serviceRating,
         String content,
+        String category,
+        Boolean isPublic,
         List<ReviewImageDetail> images,
         LocalDateTime createdAt,
         long authorReviewCount,
@@ -35,6 +37,8 @@ public record ReviewResponse(
                 review.getAtmosphereRating(),
                 review.getServiceRating(),
                 review.getContent(),
+                review.getCategory(),
+                review.getIsPublic(),
                 review.getImages().stream()
                         .map(ReviewImageDetail::from)
                         .toList(),
