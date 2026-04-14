@@ -61,7 +61,7 @@ class ReviewServiceTest {
 
         User user = User.builder().nickname("jason").build();
         // 맛 5.0, 분위기 5.0, 서비스 5.0 -> 평균 5.0
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "정말 맛있어요!");
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "정말 맛있어요!", "한식", true);
 
         MockMultipartFile image = new MockMultipartFile("images", "test.jpg", "image/jpeg", "test".getBytes());
         List<MultipartFile> images = List.of(image);
@@ -97,7 +97,7 @@ class ReviewServiceTest {
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "글만 있는 리뷰");
+        ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "글만 있는 리뷰", "한식", true);
         List<MultipartFile> images = List.of();
 
         // when
@@ -128,6 +128,8 @@ class ReviewServiceTest {
                 .atmosphereRating(5.0)
                 .serviceRating(4.5)
                 .content("정말 맛있어요!")
+                .category("한식")
+                .isPublic(true)
                 .build();
         ReflectionTestUtils.setField(review, "images", new ArrayList<ReviewImage>());
         ReflectionTestUtils.setField(review, "id", 100L);
@@ -155,6 +157,8 @@ class ReviewServiceTest {
         assertThat(result.get(0).tasteRating()).isEqualTo(4.0);
         assertThat(result.get(0).atmosphereRating()).isEqualTo(5.0);
         assertThat(result.get(0).serviceRating()).isEqualTo(4.5);
+        assertThat(result.get(0).category()).isEqualTo("한식");
+        assertThat(result.get(0).isPublic()).isTrue();
         assertThat(result.get(0).authorReviewCount()).isEqualTo(5L);
         assertThat(result.get(0).authorAverageRating()).isEqualTo(4.0);
 
@@ -194,6 +198,8 @@ class ReviewServiceTest {
                 .tasteRating(3.0)
                 .atmosphereRating(3.0)
                 .serviceRating(3.0)
+                .category("한식")
+                .isPublic(true)
                 .build();
         ReflectionTestUtils.setField(review, "id", reviewId);
 

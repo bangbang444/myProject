@@ -2,6 +2,7 @@ package bangbang.gourmet.review.dto;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record ReviewCreateRequest(
@@ -17,6 +18,12 @@ public record ReviewCreateRequest(
         @DecimalMin(value = "0.0") @DecimalMax(value = "5.0")
         Double serviceRating,
 
-        String content
+        String content,
+
+        @NotBlank(message = "카테고리는 필수입니다.")
+        String category,
+
+        @NotNull(message = "공개 여부는 필수입니다.")
+        Boolean isPublic
 ) {
 }

@@ -41,18 +41,26 @@ public class Review extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;  // 리뷰 본문
 
+    @Column(nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private Boolean isPublic = false;
+
     // 리뷰 이미지는 별도 엔티티(1:N)로 분리
     @OneToMany(mappedBy = "review")
     private final List<ReviewImage> images = new ArrayList<>();
 
     @Builder
-    public Review(Restaurant restaurant, User user, Double tasteRating, Double atmosphereRating, Double serviceRating, String content) {
+    public Review(Restaurant restaurant, User user, Double tasteRating, Double atmosphereRating, Double serviceRating, String content, String category, Boolean isPublic) {
         this.restaurant = restaurant;
         this.user = user;
         this.tasteRating = tasteRating;
         this.atmosphereRating = atmosphereRating;
         this.serviceRating = serviceRating;
         this.content = content;
+        this.category = category;
+        this.isPublic = isPublic != null ? isPublic : false;
     }
 
     public Double getAverageRating() {
