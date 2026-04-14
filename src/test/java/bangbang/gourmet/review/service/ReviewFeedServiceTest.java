@@ -100,6 +100,28 @@ class ReviewFeedServiceTest {
         verify(reviewRepository, never()).findAllByUserIds(any());
     }
 
+    @Test
+    @DisplayName("isPublic=false인 리뷰는 피드에 노출되지 않는다")
+    void getFollowerFeed_ExcludesPrivateReviews() {
+        // given
+        Long currentUserId = 1L;
+        Long followingId = 2L;
+
+        given(userRepository.existsById(currentUserId)).willReturn(true);
+        given(followRepository.findFollowingIdsByFollowerId(currentUserId))
+                .willReturn(List.of(followingId));
+
+        // isPublic=false인 비공개 리뷰는 findAllByUserIds 쿼리 자체에서 걸러짐
+        given(reviewRepository.findAllByUserIds(List.of(followingId)))
+                .willReturn(List.of()); // 쿼리 레벨에서 필터링됐다고 가정
+
+        // when
+        List<ReviewFeedResponse> result = reviewFeedService.getFollowerFeed(currentUserId);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
     private Review createMockReview(Long authorId) {
         User author = User.builder().nickname("테스터").build();
         ReflectionTestUtils.setField(author, "id", authorId);
@@ -117,10 +139,12 @@ class ReviewFeedServiceTest {
                 .tasteRating(4.5)
                 .atmosphereRating(4.5)
                 .serviceRating(4.5)
+                .category("한식")
+                .isPublic(true)
                 .build();
         ReflectionTestUtils.setField(review, "id", 1000L);
         ReflectionTestUtils.setField(review, "createdDate", LocalDateTime.of(2024, 1, 1, 12, 0));
-        ReflectionTestUtils.setField(review, "images", List.of()); // 이미지는 일단 빈 리스트
+        ReflectionTestUtils.setField(review, "images", List.of());
 
         return review;
     }
