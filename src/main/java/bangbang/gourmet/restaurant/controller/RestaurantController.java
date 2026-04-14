@@ -4,6 +4,7 @@ import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.restaurant.dto.RestaurantDetailResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantResponse;
+import bangbang.gourmet.restaurant.dto.RestaurantSearchResponse;
 import bangbang.gourmet.restaurant.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,13 @@ import java.util.List;
 @RequestMapping("/api/restaurant")
 public class RestaurantController {
     private final RestaurantService restaurantService;
+
+    @GetMapping("/search")
+    public Response<List<RestaurantSearchResponse>> searchRestaurants(
+            @RequestParam("keyword") String keyword) {
+        List<RestaurantSearchResponse> responses = restaurantService.searchByName(keyword);
+        return Response.success(SuccessCode.SUCCESS, responses);
+    }
 
     @GetMapping("/nearby")
     public Response<List<RestaurantResponse>> getNearbyGems(
