@@ -57,6 +57,18 @@ class RestaurantServiceTest {
     }
 
     @Test
+    @DisplayName("키워드가 빈 문자열이면 빈 리스트를 반환한다")
+    void searchByName_ReturnsEmptyList_WhenKeywordIsEmpty() {
+        assertThat(restaurantService.searchByName("")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("키워드가 공백만 있으면 빈 리스트를 반환한다")
+    void searchByName_ReturnsEmptyList_WhenKeywordIsBlank() {
+        assertThat(restaurantService.searchByName("   ")).isEmpty();
+    }
+
+    @Test
     @DisplayName("키워드와 일치하는 식당이 없으면 빈 리스트를 반환한다")
     void searchByName_ReturnsEmptyList_WhenNoMatch() {
         // given

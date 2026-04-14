@@ -18,6 +18,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -37,8 +38,11 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final ReviewRepository reviewRepository;
 
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<RestaurantSearchResponse> searchByName(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
         return restaurantRepository.findByRestaurantNameContainingIgnoreCase(keyword)
                 .stream()
                 .map(r -> new RestaurantSearchResponse(
