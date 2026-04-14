@@ -22,4 +22,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     @Query("select r from Restaurant r left join fetch r.imageUrls where r.restaurantId = :id")
     Optional<Restaurant> findByIdWithImages(@Param("id") Long id);
+
+    List<Restaurant> findByRestaurantNameContainingIgnoreCase(String keyword);
 }

@@ -5,6 +5,7 @@ import bangbang.gourmet.restaurant.dto.MenuResponse;
 import bangbang.gourmet.restaurant.dto.OperatingHourResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantDetailResponse;
 import bangbang.gourmet.restaurant.dto.RestaurantResponse;
+import bangbang.gourmet.restaurant.dto.RestaurantSearchResponse;
 import bangbang.gourmet.restaurant.entity.OpeningHour;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.entity.RestaurantImage;
@@ -35,6 +36,20 @@ public class RestaurantService {
     public static final int EARTH_RADIUS_KM = 6371;
     private final RestaurantRepository restaurantRepository;
     private final ReviewRepository reviewRepository;
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<RestaurantSearchResponse> searchByName(String keyword) {
+        return restaurantRepository.findByRestaurantNameContainingIgnoreCase(keyword)
+                .stream()
+                .map(r -> new RestaurantSearchResponse(
+                        r.getRestaurantId(),
+                        r.getRestaurantName(),
+                        r.getMainCategory(),
+                        r.getDong(),
+                        r.getImageUrls().isEmpty() ? null : r.getImageUrls().get(0).getImageUrl()
+                ))
+                .toList();
+    }
 
     public List<RestaurantResponse> getNearbyGems(double userLat, double userLon, int size) {
         // 위경도 ±0.02 정도의 범위를 계산해서 후보군만 가져옵니다.
