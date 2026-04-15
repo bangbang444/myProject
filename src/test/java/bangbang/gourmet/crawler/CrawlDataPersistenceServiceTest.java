@@ -1,6 +1,5 @@
 package bangbang.gourmet.crawler;
 
-import bangbang.gourmet.global.ncp.NcpMapService;
 import bangbang.gourmet.restaurant.entity.Category;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.*;
@@ -21,17 +20,16 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class NaverCrawlerServiceTest {
+class CrawlDataPersistenceServiceTest {
 
     @InjectMocks
-    private NaverCrawlerService naverCrawlerService;
+    private CrawlDataPersistenceService crawlDataPersistenceService;
 
     @Mock private RestaurantRepository restaurantRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private RestaurantCategoryRepository restaurantCategoryRepository;
     @Mock private OpeningHourRepository openingHourRepository;
     @Mock private MenuRepository menuRepository;
-    @Mock private NcpMapService ncpMapService;
 
     private Restaurant buildRestaurant() {
         Restaurant restaurant = Restaurant.builder()
@@ -70,10 +68,9 @@ class NaverCrawlerServiceTest {
         given(restaurantCategoryRepository.saveAll(any())).willReturn(List.of());
         given(openingHourRepository.saveAll(any())).willReturn(List.of());
         given(menuRepository.saveAll(any())).willReturn(List.of());
-        given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
-        naverCrawlerService.saveCrawledData(dto);
+        crawlDataPersistenceService.saveCrawledData(dto);
 
         // then
         assertThat(restaurant.getPhoneNumber()).isEqualTo("02-1234-5678");
@@ -92,10 +89,9 @@ class NaverCrawlerServiceTest {
                 .build();
 
         given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
-        given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
-        naverCrawlerService.saveCrawledData(dto);
+        crawlDataPersistenceService.saveCrawledData(dto);
 
         // then
         verify(openingHourRepository, never()).deleteByRestaurant(any());
@@ -115,10 +111,9 @@ class NaverCrawlerServiceTest {
                 .build();
 
         given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
-        given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
-        naverCrawlerService.saveCrawledData(dto);
+        crawlDataPersistenceService.saveCrawledData(dto);
 
         // then
         verify(menuRepository, never()).deleteByRestaurant(any());
@@ -130,9 +125,6 @@ class NaverCrawlerServiceTest {
     void saveCrawledData_Recrawl_ReplacesExistingData() {
         // given
         Restaurant restaurant = buildRestaurant();
-        List<Long> oldHourIds = List.of(1L, 2L);
-        List<Long> oldMenuIds = List.of(3L, 4L);
-
         RestaurantCrawledDto dto = RestaurantCrawledDto.builder()
                 .name("테스트식당").address("서울시 강남구")
                 .phoneNumber("02-1234-5678")
@@ -145,10 +137,9 @@ class NaverCrawlerServiceTest {
         given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
         given(openingHourRepository.saveAll(any())).willReturn(List.of());
         given(menuRepository.saveAll(any())).willReturn(List.of());
-        given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
-        naverCrawlerService.saveCrawledData(dto);
+        crawlDataPersistenceService.saveCrawledData(dto);
 
         // then
         verify(openingHourRepository).deleteByRestaurant(restaurant);

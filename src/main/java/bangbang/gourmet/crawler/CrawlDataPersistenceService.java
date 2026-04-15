@@ -1,6 +1,6 @@
 package bangbang.gourmet.crawler;
 
-import bangbang.gourmet.global.ncp.NcpMapService;
+import bangbang.gourmet.global.ncp.AddressResult;
 import bangbang.gourmet.restaurant.entity.*;
 import bangbang.gourmet.restaurant.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NaverCrawlerService {
+public class CrawlDataPersistenceService {
 
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
@@ -21,17 +21,14 @@ public class NaverCrawlerService {
     private final OpeningHourRepository openingHourRepository;
     private final MenuRepository menuRepository;
 
-    private final NcpMapService ncpMapService;
-
     @Transactional
-    public void saveCrawledData(RestaurantCrawledDto dto) {
+    public Long saveCrawledData(RestaurantCrawledDto dto) {
         // 1. 식당 조회 또는 생성
         Restaurant restaurant = restaurantRepository.findByRestaurantNameAndAddress(dto.getName(), dto.getAddress())
                 .orElseGet(() -> restaurantRepository.save(Restaurant.builder()
                         .restaurantName(dto.getName())
                         .address(dto.getAddress())
                         .build()));
-
 
         // 2. 기본 정보 업데이트 (좌표 등 최신화) - 필수!
         restaurant.updateInfo(dto.getLatitude(), dto.getLongitude());
@@ -87,14 +84,15 @@ public class NaverCrawlerService {
             restaurant.getMenus().addAll(savedMenus);
         }
 
-        // 6. 저장
-        restaurantRepository.save(restaurant); // 명시적인 save() 호출은 생략 가능 (Transaction 종료 시 자동 반영)
-        // 7. 주소 등록
-        ncpMapService.reverseGeocode(
-                restaurant.getRestaurantId(),
-                restaurant.getLatitude(),
-                restaurant.getLongitude()
-        );
         log.info("성공적으로 저장/업데이트 되었습니다: {}", restaurant.getRestaurantName());
+        return restaurant.getRestaurantId();
+    }
+
+    @Transactional
+    public void applyAddress(Long restaurantId, String address, String restaurantName, AddressResult result) {
+        restaurantRepository.findById(restaurantId).ifPresent(restaurant -> {
+            String fullAddress = String.format("%s (%s)", address, restaurantName);
+            restaurant.updateAddress(result.sido(), result.sigungu(), result.dong(), fullAddress);
+        });
     }
 }
