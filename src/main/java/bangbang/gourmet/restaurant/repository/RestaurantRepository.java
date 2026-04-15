@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     Optional<Restaurant> findByRestaurantNameAndAddress(String restaurantName, String address);
+    Optional<Restaurant> findByNaverPlaceId(String naverPlaceId);
 
     List<Restaurant> findByMainCategoryIsNull();
 

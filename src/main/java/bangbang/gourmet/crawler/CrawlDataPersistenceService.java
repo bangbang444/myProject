@@ -1,6 +1,8 @@
 package bangbang.gourmet.crawler;
 
 import bangbang.gourmet.global.ncp.AddressResult;
+import bangbang.gourmet.global.s3.S3Buckets;
+import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.*;
 import bangbang.gourmet.restaurant.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static bangbang.gourmet.crawler.NaverMapConstants.Image.NAVER_REFERRER;
 
 @Slf4j
 @Service
@@ -20,14 +24,17 @@ public class CrawlDataPersistenceService {
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final OpeningHourRepository openingHourRepository;
     private final MenuRepository menuRepository;
+    private final RestaurantImageRepository restaurantImageRepository;
+    private final S3Service s3Service;
 
     @Transactional
     public Long saveCrawledData(RestaurantCrawledDto dto) {
         // 1. 식당 조회 또는 생성
-        Restaurant restaurant = restaurantRepository.findByRestaurantNameAndAddress(dto.getName(), dto.getAddress())
+        Restaurant restaurant = restaurantRepository.findByNaverPlaceId(dto.getNaverPlaceId())
                 .orElseGet(() -> restaurantRepository.save(Restaurant.builder()
                         .restaurantName(dto.getName())
                         .address(dto.getAddress())
+                        .naverPlaceId(dto.getNaverPlaceId())
                         .build()));
 
         // 2. 기본 정보 업데이트 (좌표 등 최신화) - 필수!
@@ -82,6 +89,17 @@ public class CrawlDataPersistenceService {
                     .toList();
             List<Menu> savedMenus = menuRepository.saveAll(newMenus);
             restaurant.getMenus().addAll(savedMenus);
+        }
+
+        // 6. 썸네일 이미지 처리
+        if (dto.getThumbnailUrl() != null) {
+            restaurantImageRepository.deleteByRestaurant(restaurant);
+            try {
+                String imageKey = s3Service.uploadImageFromUrl(dto.getThumbnailUrl(), S3Buckets.RESTAURANT, "thumbnails", NAVER_REFERRER);
+                restaurantImageRepository.save(RestaurantImage.of(restaurant, imageKey, 0));
+            } catch (Exception e) {
+                log.warn("썸네일 업로드 실패 - 식당 데이터는 저장됨 (ID: {}): {}", restaurant.getRestaurantId(), e.getMessage());
+            }
         }
 
         log.info("성공적으로 저장/업데이트 되었습니다: {}", restaurant.getRestaurantName());

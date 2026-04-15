@@ -15,6 +15,8 @@ public class RestaurantCrawledDto {
     private double longitude;
     private List<OpeningHourDto> openingHours;
     private List<MenuDto> menus;
+    private String thumbnailUrl;
+    private String naverPlaceId;
 
 
 
