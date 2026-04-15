@@ -162,6 +162,9 @@ public class NaverCrawler {
                 new Page.WaitForURLOptions().setTimeout(8000));
 
         String naverPlaceId = extractNaverPlaceId(page.url());
+        if (naverPlaceId == null) {
+            throw new IllegalStateException("네이버 place ID 추출 실패 - URL: " + page.url());
+        }
         log.info("네이버 place ID: {}", naverPlaceId);
 
         FrameLocator detailFrame = page.frameLocator(ENTRY_IFRAME_SELECTOR);
