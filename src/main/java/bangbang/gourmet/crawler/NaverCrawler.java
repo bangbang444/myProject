@@ -1,5 +1,7 @@
 package bangbang.gourmet.crawler;
 
+import bangbang.gourmet.global.ncp.AddressResult;
+import bangbang.gourmet.global.ncp.NcpMapService;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import lombok.RequiredArgsConstructor;
@@ -24,20 +26,19 @@ import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
 @Component
 @RequiredArgsConstructor
 public class NaverCrawler {
-    private final NaverCrawlerService naverCrawlerService;
+    private final CrawlDataPersistenceService crawlDataPersistenceService;
+    private final NcpMapService ncpMapService;
 
     public void crawlAll(List<String> keywords) {
-        try (Playwright playwright = Playwright.create()) {
-            Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+        try (Playwright playwright = Playwright.create();
+             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                     .setHeadless(true)
-                    .setSlowMo(150));
+                    .setSlowMo(150))) {
 
             for (String keyword : keywords) {
                 log.info("▶▶▶ [{}] 지역 수집을 시작합니다.", keyword);
                 singleCrawl(browser, keyword);
             }
-
-            browser.close();
         } catch (Exception e) {
             log.error("크롤링 중 에러 발생: ", e);
         }
@@ -133,59 +134,64 @@ public class NaverCrawler {
                 }
                 continue; // 개수가 늘어났으니 다시 위로 가서 수집 계속
             }
-            processingSingleRestaurant(page, searchFrame, processedCount);
+            processSingleRestaurant(page, searchFrame, processedCount);
             processedCount++;
 
             applyRandomSleep(processedCount, page);
         }
     }
 
-    private void processingSingleRestaurant(Page page, FrameLocator searchFrame, int index){
-        try{
-            log.info("--- {}번째 식당 작업 시작 ---", index + 1);
-            // i번째 식당을 선택해서 클릭
-            Locator target = searchFrame.locator(RESTAURANT_ITEM_LINK).nth(index);
-            target.scrollIntoViewIfNeeded();
-            target.click();
-
-            // 식당 이름이 나타날 때까지 대기 (데이터 로딩 확인)
-            FrameLocator detailFrame = page.frameLocator(ENTRY_IFRAME_SELECTOR);
-            detailFrame.locator(TITLE_SELECTOR).waitFor(new Locator.WaitForOptions().setTimeout(5000));
-
-            // 2. 데이터 수집 (파싱)
-            String title = detailFrame.locator(TITLE_SELECTOR).innerText();
-            String category = detailFrame.locator(CATEGORY_SELECTOR).innerText();
-            String address = detailFrame.locator(ADDRESS_SELECTOR).innerText(); // LDgIH
-            // 전화번호는 없을 수도 있으니 체크
-            String phoneNumber = detailFrame.locator(PHONE_NUMBER_SELECTOR).isVisible() ?
-                                detailFrame.locator(PHONE_NUMBER_SELECTOR).innerText() : NO_PHONE_NUMBER;
-            log.info("결과: {} / {} / {} / {}", title, category, address, phoneNumber);
-
-            // 카테고리 리스트 변환
-            List<String> categoryList = Arrays.stream(category.split(","))
-                    .map(String::trim).filter(s -> !s.isEmpty()).toList();
-            // 좌표 추출
-            String[] coords = extractCoordinates(page);
-            ensureOpeningHoursExpanded(detailFrame);
-
-            List<RestaurantCrawledDto.OpeningHourDto> openingHourDtos = parseOpeningHours(detailFrame);
-
-            // 메뉴 추출
-            List<RestaurantCrawledDto.MenuDto> menus = extractMenus(detailFrame);
-
-            RestaurantCrawledDto restaurantDto = RestaurantCrawledDto.builder()
-                    .name(title)
-                    .categories(categoryList)
-                    .address(address)
-                    .phoneNumber(phoneNumber)
-                    .longitude(Double.parseDouble(coords[0]))
-                    .latitude(Double.parseDouble(coords[1]))
-                    .openingHours(openingHourDtos)
-                    .menus(menus)
-                    .build();
-            naverCrawlerService.saveCrawledData(restaurantDto);
-        }catch (Exception e){
+    private void processSingleRestaurant(Page page, FrameLocator searchFrame, int index) {
+        try {
+            RestaurantCrawledDto dto = extractRestaurantData(page, searchFrame, index);
+            persistRestaurant(dto);
+        } catch (Exception e) {
             log.error("{}번째 식당 처리 중 에러 발생: {}", index + 1, e.getMessage());
+        }
+    }
+
+    private RestaurantCrawledDto extractRestaurantData(Page page, FrameLocator searchFrame, int index) {
+        log.info("--- {}번째 식당 작업 시작 ---", index + 1);
+        Locator target = searchFrame.locator(RESTAURANT_ITEM_LINK).nth(index);
+        target.scrollIntoViewIfNeeded();
+        target.click();
+
+        FrameLocator detailFrame = page.frameLocator(ENTRY_IFRAME_SELECTOR);
+        detailFrame.locator(TITLE_SELECTOR).waitFor(new Locator.WaitForOptions().setTimeout(5000));
+
+        String title = detailFrame.locator(TITLE_SELECTOR).innerText();
+        String category = detailFrame.locator(CATEGORY_SELECTOR).innerText();
+        String address = detailFrame.locator(ADDRESS_SELECTOR).innerText();
+        String phoneNumber = detailFrame.locator(PHONE_NUMBER_SELECTOR).isVisible() ?
+                detailFrame.locator(PHONE_NUMBER_SELECTOR).innerText() : NO_PHONE_NUMBER;
+        log.info("결과: {} / {} / {} / {}", title, category, address, phoneNumber);
+
+        List<String> categoryList = Arrays.stream(category.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).toList();
+        String[] coords = extractCoordinates(page);
+        ensureOpeningHoursExpanded(detailFrame);
+
+        return RestaurantCrawledDto.builder()
+                .name(title)
+                .categories(categoryList)
+                .address(address)
+                .phoneNumber(phoneNumber)
+                .longitude(Double.parseDouble(coords[0]))
+                .latitude(Double.parseDouble(coords[1]))
+                .openingHours(parseOpeningHours(detailFrame))
+                .menus(extractMenus(detailFrame))
+                .build();
+    }
+
+    private void persistRestaurant(RestaurantCrawledDto dto) {
+        Long restaurantId = crawlDataPersistenceService.saveCrawledData(dto);
+        try {
+            AddressResult addressResult = ncpMapService.reverseGeocode(dto.getLatitude(), dto.getLongitude());
+            if (addressResult != null) {
+                crawlDataPersistenceService.applyAddress(restaurantId, dto.getAddress(), dto.getName(), addressResult);
+            }
+        } catch (Exception e) {
+            log.warn("주소 정제 실패 - 식당 데이터는 저장됨 (ID: {}): {}", restaurantId, e.getMessage());
         }
     }
 

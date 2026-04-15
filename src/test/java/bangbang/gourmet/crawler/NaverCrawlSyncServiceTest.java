@@ -22,7 +22,7 @@ class NaverCrawlSyncServiceTest {
     private NaverCrawlSyncService naverCrawlSyncService;
 
     @Mock private NaverCrawler naverCrawler;
-    @Mock private CrawlTargetManger crawlTargetManger;
+    @Mock private CrawlTargetManager crawlTargetManger;
 
     @Test
     @DisplayName("크롤링 중이 아니면 crawlAll()이 호출되어야 한다")

@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NaverCrawlSyncService {
 
     private final NaverCrawler naverCrawler;
-    private final CrawlTargetManger crawlTargetManger;
+    private final CrawlTargetManager crawlTargetManager;
 
     private final AtomicBoolean isCrawling = new AtomicBoolean(false);
 
@@ -26,7 +26,7 @@ public class NaverCrawlSyncService {
         }
         try {
             log.info(">>>> [비동기] 네이버 크롤링 동기화 작업을 시작합니다. <<<<");
-            List<String> keywords = crawlTargetManger.getDefaultKeywords();
+            List<String> keywords = crawlTargetManager.getDefaultKeywords();
             naverCrawler.crawlAll(keywords);
             log.info(">>>> [비동기] 모든 지역 크롤링 완료 <<<<");
         } finally {
