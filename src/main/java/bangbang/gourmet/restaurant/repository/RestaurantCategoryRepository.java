@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface RestaurantCategoryRepository extends JpaRepository<RestaurantCategory, Long> {
-    // @Modifying이 있어야 '삭제'나 '수정' 쿼리가 작동합니다.
     @Modifying
     @Query("delete from RestaurantCategory rc where rc.restaurant = :restaurant")
     void deleteByRestaurant(@Param("restaurant") Restaurant restaurant);

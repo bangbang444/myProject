@@ -66,6 +66,10 @@ public class Restaurant extends BaseEntity {
         this.longitude = longitude;
     }
 
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public void updateAddress(String sido, String sigungu, String dong, String addressFull) {
         this.sido = sido;
         this.sigungu = sigungu;
