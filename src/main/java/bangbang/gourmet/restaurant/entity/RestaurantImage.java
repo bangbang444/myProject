@@ -18,4 +18,12 @@ public class RestaurantImage {
 
     private String imageUrl;
     private Integer displayOrder;
+
+    public static RestaurantImage of(Restaurant restaurant, String imageKey, int displayOrder) {
+        RestaurantImage image = new RestaurantImage();
+        image.restaurant = restaurant;
+        image.imageUrl = imageKey;
+        image.displayOrder = displayOrder;
+        return image;
+    }
 }

@@ -15,6 +15,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.UUID;
 
 @Service
@@ -44,6 +46,41 @@ public class S3Service {
 
             return fileName;
         } catch(IOException e){
+            throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
+        }
+    }
+
+    public String uploadImageFromUrl(String imageUrl, String bucketName, String dirName, String referer) {
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(imageUrl).openConnection();
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            conn.setRequestProperty("Referer", referer);
+            conn.connect();
+
+            String contentType = conn.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
+            }
+
+            String ext = switch (contentType.split(";")[0].trim()) {
+                case "image/jpeg" -> ".jpg";
+                case "image/png" -> ".png";
+                case "image/webp" -> ".webp";
+                default -> ".jpg";
+            };
+
+            byte[] imageBytes = conn.getInputStream().readAllBytes();
+            String fileName = dirName + "/" + UUID.randomUUID() + ext;
+
+            s3Client.putObject(PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType(contentType.split(";")[0].trim())
+                    .build(),
+                    RequestBody.fromBytes(imageBytes));
+
+            return fileName;
+        } catch (IOException e) {
             throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
         }
     }
