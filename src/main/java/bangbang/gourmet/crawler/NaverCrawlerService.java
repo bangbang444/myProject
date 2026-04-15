@@ -35,56 +35,49 @@ public class NaverCrawlerService {
 
         // 2. 기본 정보 업데이트 (좌표 등 최신화) - 필수!
         restaurant.updateInfo(dto.getLatitude(), dto.getLongitude());
+        restaurant.updatePhoneNumber(dto.getPhoneNumber());
 
-        // 3. 카테고리 처리
+        // 3. 카테고리 처리 (기존 ID 수집 → 새 데이터 저장 → 기존 삭제)
         if (dto.getCategories() != null) {
-            restaurantCategoryRepository.deleteByRestaurant(restaurant);
-            restaurantCategoryRepository.flush();
-            restaurant.getRestaurantCategories().clear();
+            List<Long> oldCategoryIds = restaurantCategoryRepository.findIdsByRestaurant(restaurant);
 
-            // 새로운 매핑 리스트 생성
             dto.getCategories().stream()
                     .distinct()
                     .forEach(catName -> {
                         Category category = categoryRepository.findByName(catName)
                                 .orElseGet(() -> categoryRepository.save(new Category(catName)));
-
-                        RestaurantCategory mapping = RestaurantCategory.builder()
+                        restaurantCategoryRepository.save(RestaurantCategory.builder()
                                 .restaurant(restaurant)
                                 .category(category)
-                                .build();
-
-                        restaurantCategoryRepository.save(mapping);
+                                .build());
                     });
+
+            restaurantCategoryRepository.deleteAllByIdInBatch(oldCategoryIds);
+            restaurant.getRestaurantCategories().clear();
         }
 
-        // 4. 영업시간 처리 (명시적 삭제 및 저장)
-        openingHourRepository.deleteByRestaurant(restaurant);
-        openingHourRepository.flush(); // 삭제 확정
-        restaurant.getOpeningHours().clear();
-
+        // 4. 영업시간 처리 (기존 ID 수집 → 새 데이터 저장 → 기존 삭제, null이면 기존 데이터 유지)
         if (dto.getOpeningHours() != null) {
-            List<OpeningHour> newHours = dto.getOpeningHours().stream()
+            List<Long> oldHourIds = openingHourRepository.findIdsByRestaurant(restaurant);
+            openingHourRepository.saveAll(dto.getOpeningHours().stream()
                     .map(h -> OpeningHour.of(h, restaurant))
-                    .toList();
-            openingHourRepository.saveAll(newHours);
+                    .toList());
+            openingHourRepository.deleteAllByIdInBatch(oldHourIds);
+            restaurant.getOpeningHours().clear();
         }
 
-        // 5. 메뉴처리
-        menuRepository.deleteByRestaurant(restaurant);
-        menuRepository.flush();
-
-        restaurant.getMenus().clear();
-
+        // 5. 메뉴 처리 (기존 ID 수집 → 새 데이터 저장 → 기존 삭제, null이면 기존 데이터 유지)
         if (dto.getMenus() != null) {
-            List<Menu> newMenus = dto.getMenus().stream()
+            List<Long> oldMenuIds = menuRepository.findIdsByRestaurant(restaurant);
+            menuRepository.saveAll(dto.getMenus().stream()
                     .map(m -> Menu.builder()
                             .name(m.getName())
                             .price(m.getPrice())
                             .restaurant(restaurant)
                             .build())
-                    .toList();
-            menuRepository.saveAll(newMenus);
+                    .toList());
+            menuRepository.deleteAllByIdInBatch(oldMenuIds);
+            restaurant.getMenus().clear();
         }
 
         // 6. 저장
