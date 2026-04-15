@@ -66,11 +66,10 @@ class NaverCrawlerServiceTest {
                 .build();
 
         given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
-        given(restaurantCategoryRepository.findIdsByRestaurant(restaurant)).willReturn(List.of());
         given(categoryRepository.findByName("한식")).willReturn(Optional.of(new Category("한식")));
-        given(restaurantCategoryRepository.save(any())).willReturn(null);
-        given(openingHourRepository.findIdsByRestaurant(restaurant)).willReturn(List.of());
-        given(menuRepository.findIdsByRestaurant(restaurant)).willReturn(List.of());
+        given(restaurantCategoryRepository.saveAll(any())).willReturn(List.of());
+        given(openingHourRepository.saveAll(any())).willReturn(List.of());
+        given(menuRepository.saveAll(any())).willReturn(List.of());
         given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
@@ -99,9 +98,8 @@ class NaverCrawlerServiceTest {
         naverCrawlerService.saveCrawledData(dto);
 
         // then
-        verify(openingHourRepository, never()).findIdsByRestaurant(any());
+        verify(openingHourRepository, never()).deleteByRestaurant(any());
         verify(openingHourRepository, never()).saveAll(any());
-        verify(openingHourRepository, never()).deleteAllByIdInBatch(any());
     }
 
     @Test
@@ -123,9 +121,8 @@ class NaverCrawlerServiceTest {
         naverCrawlerService.saveCrawledData(dto);
 
         // then
-        verify(menuRepository, never()).findIdsByRestaurant(any());
+        verify(menuRepository, never()).deleteByRestaurant(any());
         verify(menuRepository, never()).saveAll(any());
-        verify(menuRepository, never()).deleteAllByIdInBatch(any());
     }
 
     @Test
@@ -146,17 +143,17 @@ class NaverCrawlerServiceTest {
                 .build();
 
         given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
-        given(openingHourRepository.findIdsByRestaurant(restaurant)).willReturn(oldHourIds);
-        given(menuRepository.findIdsByRestaurant(restaurant)).willReturn(oldMenuIds);
+        given(openingHourRepository.saveAll(any())).willReturn(List.of());
+        given(menuRepository.saveAll(any())).willReturn(List.of());
         given(restaurantRepository.save(any())).willReturn(restaurant);
 
         // when
         naverCrawlerService.saveCrawledData(dto);
 
         // then
+        verify(openingHourRepository).deleteByRestaurant(restaurant);
         verify(openingHourRepository).saveAll(any());
-        verify(openingHourRepository).deleteAllByIdInBatch(oldHourIds);
+        verify(menuRepository).deleteByRestaurant(restaurant);
         verify(menuRepository).saveAll(any());
-        verify(menuRepository).deleteAllByIdInBatch(oldMenuIds);
     }
 }
