@@ -93,6 +93,8 @@ public class CrawlDataPersistenceService {
 
         // 6. 썸네일 이미지 처리
         if (dto.getThumbnailUrl() != null) {
+            restaurantImageRepository.findByRestaurantOrderByDisplayOrderAsc(restaurant)
+                    .forEach(image -> s3Service.delete(S3Buckets.RESTAURANT, image.getImageUrl()));
             restaurantImageRepository.deleteByRestaurant(restaurant);
             try {
                 String imageKey = s3Service.uploadImageFromUrl(dto.getThumbnailUrl(), S3Buckets.RESTAURANT, "thumbnails", NAVER_REFERRER);
