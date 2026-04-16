@@ -92,6 +92,7 @@ public class CrawlDataPersistenceService {
         }
 
         // 6. 썸네일 이미지 처리
+        // TODO: S3 삭제 로직과 DB 트랜잭션 정합성 개선 필요
         if (dto.getThumbnailUrl() != null) {
             restaurantImageRepository.findByRestaurantOrderByDisplayOrderAsc(restaurant)
                     .forEach(image -> s3Service.delete(S3Buckets.RESTAURANT, image.getImageUrl()));

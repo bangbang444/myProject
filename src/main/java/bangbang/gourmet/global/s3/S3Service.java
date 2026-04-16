@@ -54,6 +54,8 @@ public class S3Service {
     public String uploadImageFromUrl(String imageUrl, String bucketName, String dirName, String referer) {
         try {
             HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
+            conn.setConnectTimeout(5_000);
+            conn.setReadTimeout(10_000);
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
             conn.setRequestProperty("Referer", referer);
             conn.connect();
@@ -71,6 +73,7 @@ public class S3Service {
                 default -> ".jpg";
             };
 
+            // TODO: 대용량 파일 응답 시 OutOfMemoryError 방지 로직 추가
             byte[] imageBytes;
             try (InputStream is = conn.getInputStream()) {
                 imageBytes = is.readAllBytes();
