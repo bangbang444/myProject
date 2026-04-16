@@ -1,5 +1,6 @@
 package bangbang.gourmet.crawler;
 
+import bangbang.gourmet.global.s3.S3Service;
 import bangbang.gourmet.restaurant.entity.Category;
 import bangbang.gourmet.restaurant.entity.Restaurant;
 import bangbang.gourmet.restaurant.repository.*;
@@ -30,11 +31,14 @@ class CrawlDataPersistenceServiceTest {
     @Mock private RestaurantCategoryRepository restaurantCategoryRepository;
     @Mock private OpeningHourRepository openingHourRepository;
     @Mock private MenuRepository menuRepository;
+    @Mock private RestaurantImageRepository restaurantImageRepository;
+    @Mock private S3Service s3Service;
 
     private Restaurant buildRestaurant() {
         Restaurant restaurant = Restaurant.builder()
                 .restaurantName("테스트식당")
                 .address("서울시 강남구")
+                .naverPlaceId("123456789")
                 .build();
         ReflectionTestUtils.setField(restaurant, "restaurantId", 1L);
         return restaurant;
@@ -57,13 +61,14 @@ class CrawlDataPersistenceServiceTest {
         Restaurant restaurant = buildRestaurant();
         RestaurantCrawledDto dto = RestaurantCrawledDto.builder()
                 .name("테스트식당").address("서울시 강남구")
+                .naverPlaceId("123456789")
                 .phoneNumber("02-1234-5678")
                 .latitude(37.1).longitude(127.1)
                 .categories(List.of("한식"))
                 .openingHours(List.of()).menus(List.of())
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
+        given(restaurantRepository.findByNaverPlaceId(any())).willReturn(Optional.of(restaurant));
         given(categoryRepository.findByName("한식")).willReturn(Optional.of(new Category("한식")));
         given(restaurantCategoryRepository.saveAll(any())).willReturn(List.of());
         given(openingHourRepository.saveAll(any())).willReturn(List.of());
@@ -83,12 +88,13 @@ class CrawlDataPersistenceServiceTest {
         Restaurant restaurant = buildRestaurant();
         RestaurantCrawledDto dto = RestaurantCrawledDto.builder()
                 .name("테스트식당").address("서울시 강남구")
+                .naverPlaceId("123456789")
                 .phoneNumber("02-1234-5678")
                 .latitude(37.1).longitude(127.1)
                 .openingHours(null).menus(null).categories(null)
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
+        given(restaurantRepository.findByNaverPlaceId(any())).willReturn(Optional.of(restaurant));
 
         // when
         crawlDataPersistenceService.saveCrawledData(dto);
@@ -105,12 +111,13 @@ class CrawlDataPersistenceServiceTest {
         Restaurant restaurant = buildRestaurant();
         RestaurantCrawledDto dto = RestaurantCrawledDto.builder()
                 .name("테스트식당").address("서울시 강남구")
+                .naverPlaceId("123456789")
                 .phoneNumber("02-1234-5678")
                 .latitude(37.1).longitude(127.1)
                 .openingHours(null).menus(null).categories(null)
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
+        given(restaurantRepository.findByNaverPlaceId(any())).willReturn(Optional.of(restaurant));
 
         // when
         crawlDataPersistenceService.saveCrawledData(dto);
@@ -127,6 +134,7 @@ class CrawlDataPersistenceServiceTest {
         Restaurant restaurant = buildRestaurant();
         RestaurantCrawledDto dto = RestaurantCrawledDto.builder()
                 .name("테스트식당").address("서울시 강남구")
+                .naverPlaceId("123456789")
                 .phoneNumber("02-1234-5678")
                 .latitude(37.1).longitude(127.1)
                 .categories(null)
@@ -134,7 +142,7 @@ class CrawlDataPersistenceServiceTest {
                 .menus(List.of(buildMenuDto()))
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameAndAddress(any(), any())).willReturn(Optional.of(restaurant));
+        given(restaurantRepository.findByNaverPlaceId(any())).willReturn(Optional.of(restaurant));
         given(openingHourRepository.saveAll(any())).willReturn(List.of());
         given(menuRepository.saveAll(any())).willReturn(List.of());
 

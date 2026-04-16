@@ -15,6 +15,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.UUID;
 
 @Service
@@ -44,6 +47,49 @@ public class S3Service {
 
             return fileName;
         } catch(IOException e){
+            throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
+        }
+    }
+
+    public String uploadImageFromUrl(String imageUrl, String bucketName, String dirName, String referer) {
+        try {
+            HttpURLConnection conn = (HttpURLConnection) URI.create(imageUrl).toURL().openConnection();
+            conn.setConnectTimeout(5_000);
+            conn.setReadTimeout(10_000);
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            conn.setRequestProperty("Referer", referer);
+            conn.connect();
+
+            String contentType = conn.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
+            }
+
+            String mimeType = contentType.split(";")[0].trim();
+            String ext = switch (mimeType) {
+                case "image/jpeg" -> ".jpg";
+                case "image/png" -> ".png";
+                case "image/webp" -> ".webp";
+                default -> ".jpg";
+            };
+
+            // TODO: 대용량 파일 응답 시 OutOfMemoryError 방지 로직 추가
+            byte[] imageBytes;
+            try (InputStream is = conn.getInputStream()) {
+                imageBytes = is.readAllBytes();
+            }
+
+            String fileName = dirName + "/" + UUID.randomUUID() + ext;
+
+            s3Client.putObject(PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType(mimeType)
+                    .build(),
+                    RequestBody.fromBytes(imageBytes));
+
+            return fileName;
+        } catch (IOException e) {
             throw new S3UploadException(ErrorCode.S3_UPLOAD_ERROR);
         }
     }

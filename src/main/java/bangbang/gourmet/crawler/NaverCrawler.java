@@ -20,6 +20,7 @@ import static bangbang.gourmet.crawler.NaverMapConstants.Menu.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.State.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Detail.*;
 import static bangbang.gourmet.crawler.NaverMapConstants.Pagination.*;
+import static bangbang.gourmet.crawler.NaverMapConstants.Image.*;
 
 
 @Slf4j
@@ -153,8 +154,18 @@ public class NaverCrawler {
     private RestaurantCrawledDto extractRestaurantData(Page page, FrameLocator searchFrame, int index) {
         log.info("--- {}번째 식당 작업 시작 ---", index + 1);
         Locator target = searchFrame.locator(RESTAURANT_ITEM_LINK).nth(index);
+        String urlBeforeClick = page.url();
         target.scrollIntoViewIfNeeded();
         target.click();
+
+        page.waitForURL(url -> !url.equals(urlBeforeClick),
+                new Page.WaitForURLOptions().setTimeout(8000));
+
+        String naverPlaceId = extractNaverPlaceId(page.url());
+        if (naverPlaceId == null) {
+            throw new IllegalStateException("네이버 place ID 추출 실패 - URL: " + page.url());
+        }
+        log.info("네이버 place ID: {}", naverPlaceId);
 
         FrameLocator detailFrame = page.frameLocator(ENTRY_IFRAME_SELECTOR);
         detailFrame.locator(TITLE_SELECTOR).waitFor(new Locator.WaitForOptions().setTimeout(5000));
@@ -170,6 +181,7 @@ public class NaverCrawler {
                 .map(String::trim).filter(s -> !s.isEmpty()).toList();
         String[] coords = extractCoordinates(page);
         ensureOpeningHoursExpanded(detailFrame);
+        String thumbnailUrl = extractThumbnailUrl(detailFrame);
 
         return RestaurantCrawledDto.builder()
                 .name(title)
@@ -180,6 +192,8 @@ public class NaverCrawler {
                 .latitude(Double.parseDouble(coords[1]))
                 .openingHours(parseOpeningHours(detailFrame))
                 .menus(extractMenus(detailFrame))
+                .thumbnailUrl(thumbnailUrl)
+                .naverPlaceId(naverPlaceId)
                 .build();
     }
 
@@ -193,6 +207,21 @@ public class NaverCrawler {
         } catch (Exception e) {
             log.warn("주소 정제 실패 - 식당 데이터는 저장됨 (ID: {}): {}", restaurantId, e.getMessage());
         }
+    }
+
+    private static String extractThumbnailUrl(FrameLocator detailFrame) {
+        try {
+            Locator thumbnail = detailFrame.locator(THUMBNAIL_SELECTOR).first();
+            thumbnail.waitFor(new Locator.WaitForOptions()
+                    .setState(WaitForSelectorState.VISIBLE)
+                    .setTimeout(3000));
+            String src = thumbnail.getAttribute("src");
+            log.info("썸네일 URL 수집: {}", src);
+            return src;
+        } catch (Exception e) {
+            log.warn("썸네일 없음, 건너뜀: {}", e.getMessage());
+        }
+        return null;
     }
 
     private static List<RestaurantCrawledDto.MenuDto> extractMenus(FrameLocator detailFrame) {
@@ -334,6 +363,11 @@ public class NaverCrawler {
             return matcher.group(1);
         }
         return DEFAULT_COORD;
+    }
+
+    private static String extractNaverPlaceId(String url) {
+        Matcher matcher = PLACE_ID_PATTERN.matcher(url);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private static BrowserContext createNewContext(Browser browser) {

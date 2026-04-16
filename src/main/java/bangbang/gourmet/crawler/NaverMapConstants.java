@@ -8,7 +8,7 @@ public class NaverMapConstants {
     public static final class Search {
         public static final String SEARCH_URL = "https://map.naver.com/p/search/";
         public static final String SEARCH_IFRAME = "#searchIframe";
-        public static final String RESTAURANT_ITEM_LINK = "a.place_bluelink";
+        public static final String RESTAURANT_ITEM_LINK = "a.YTJkH";
         public static final String LOAD_INDICATOR = "?c=";
     }
 
@@ -49,6 +49,7 @@ public class NaverMapConstants {
         public static final Pattern X_COORD = Pattern.compile("\"x\":\"(.*?)\"");
         public static final Pattern Y_COORD = Pattern.compile("\"y\":\"(.*?)\"");
         public static final Pattern TIME_PATTERN = Pattern.compile("\\d{2}:\\d{2}");
+        public static final Pattern PLACE_ID_PATTERN = Pattern.compile("/place/([0-9]+)");
     }
 
     public static final class State {
@@ -57,5 +58,10 @@ public class NaverMapConstants {
         public static final String TRUE = "true";
         public static final String FALSE = "false";
         public static final String UNDEFINED = "undefined";
+    }
+
+    public static final class Image {
+        public static final String THUMBNAIL_SELECTOR = "div.CEX4u img.K0PDV";
+        public static final String NAVER_REFERRER = "https://map.naver.com/";
     }
 }

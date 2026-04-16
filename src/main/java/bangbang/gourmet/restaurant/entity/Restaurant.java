@@ -24,6 +24,9 @@ public class Restaurant extends BaseEntity {
     @Column(nullable = false)
     private String address;
 
+    @Column(unique = true)
+    private String naverPlaceId;
+
     // 주소 필터링용 필드
     private String sido;
     private String sigungu;
