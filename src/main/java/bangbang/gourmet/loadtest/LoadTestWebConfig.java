@@ -1,6 +1,5 @@
-package bangbang.gourmet.config;
+package bangbang.gourmet.loadtest;
 
-import bangbang.gourmet.common.interceptor.LoginInterceptor;
 import bangbang.gourmet.common.resolver.UserIdArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -12,17 +11,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.util.List;
 
 @Configuration
-@Profile("!loadtest")
+@Profile("loadtest")
 @RequiredArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
-    private final LoginInterceptor loginInterceptor;
+public class LoadTestWebConfig implements WebMvcConfigurer {
+
+    private final LoadTestLoginInterceptor loadTestLoginInterceptor;
     private final UserIdArgumentResolver userIdArgumentResolver;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/auth/login");
+        registry.addInterceptor(loadTestLoginInterceptor)
+                .addPathPatterns("/api/**");
     }
 
     @Override
