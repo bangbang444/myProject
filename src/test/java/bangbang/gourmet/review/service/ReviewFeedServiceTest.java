@@ -153,6 +153,64 @@ class ReviewFeedServiceTest {
     }
 
     @Test
+    @DisplayName("내 리뷰 목록을 isPublic 조건으로 조회한다")
+    void getMyReviews_Success() {
+        Long userId = 1L;
+        Review review = createMockReview(userId);
+
+        given(userRepository.existsById(userId)).willReturn(true);
+        given(reviewRepository.findMyReviewIdsByUserIdWithCursor(eq(userId), eq(true), isNull(), any(Pageable.class)))
+                .willReturn(List.of(review.getId()));
+        given(reviewRepository.findAllWithDetailsByIds(anyList())).willReturn(List.of(review));
+        given(reviewLikeRepository.countByReviewIds(anyList())).willReturn(List.of());
+        given(commentRepository.countByReviewIds(anyList())).willReturn(List.of());
+        given(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(eq(userId), anyList())).willReturn(List.of());
+
+        CursorPageResponse<ReviewFeedResponse> result = reviewFeedService.getMyReviews(userId, true, null, 12);
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.items().get(0).userId()).isEqualTo(userId);
+    }
+
+    @Test
+    @DisplayName("내 리뷰가 없으면 빈 목록이 반환된다")
+    void getMyReviews_Empty() {
+        Long userId = 1L;
+
+        given(userRepository.existsById(userId)).willReturn(true);
+        given(reviewRepository.findMyReviewIdsByUserIdWithCursor(eq(userId), eq(false), isNull(), any(Pageable.class)))
+                .willReturn(List.of());
+
+        CursorPageResponse<ReviewFeedResponse> result = reviewFeedService.getMyReviews(userId, false, null, 12);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+    }
+
+    @Test
+    @DisplayName("내 리뷰 조회 시 다음 페이지가 있으면 hasNext=true이고 nextCursorId가 반환된다")
+    void getMyReviews_HasNext() {
+        Long userId = 1L;
+        int size = 2;
+
+        given(userRepository.existsById(userId)).willReturn(true);
+        given(reviewRepository.findMyReviewIdsByUserIdWithCursor(eq(userId), eq(true), isNull(), any(Pageable.class)))
+                .willReturn(List.of(1001L, 1000L, 999L));
+        given(reviewRepository.findAllWithDetailsByIds(List.of(1001L, 1000L)))
+                .willReturn(List.of(createMockReviewWithId(userId, 1001L), createMockReviewWithId(userId, 1000L)));
+        given(reviewLikeRepository.countByReviewIds(anyList())).willReturn(List.of());
+        given(commentRepository.countByReviewIds(anyList())).willReturn(List.of());
+        given(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(any(), anyList())).willReturn(List.of());
+
+        CursorPageResponse<ReviewFeedResponse> result = reviewFeedService.getMyReviews(userId, true, null, size);
+
+        assertThat(result.items()).hasSize(2);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.nextCursorId()).isEqualTo(1000L);
+    }
+
+    @Test
     @DisplayName("존재하지 않는 유저 ID로 피드 조회 시 USER_NOT_FOUND 예외가 발생한다")
     void getFollowerFeed_UserNotFound() {
         // given

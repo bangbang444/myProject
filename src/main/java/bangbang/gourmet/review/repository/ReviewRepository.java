@@ -59,6 +59,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "where r.id = :reviewId")
     Optional<Review> findByIdWithDetails(@Param("reviewId") Long reviewId);
 
+    @Query("select r.id from Review r " +
+            "where r.user.id = :userId " +
+            "and r.isPublic = :isPublic " +
+            "and (:cursorId is null or r.id < :cursorId) " +
+            "order by r.id desc")
+    List<Long> findMyReviewIdsByUserIdWithCursor(
+            @Param("userId") Long userId,
+            @Param("isPublic") boolean isPublic,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable);
+
     @Query("select new bangbang.gourmet.review.dto.UserReviewStats(r.user.id, COUNT(r), AVG((r.tasteRating + r.atmosphereRating + r.serviceRating) / 3.0)) " +
             "from Review r " +
             "where r.user.id in :userIds " +
