@@ -86,6 +86,10 @@ dependencies {
 
 	// p6spy - SQL 쿼리 로깅 (개발/디버깅용)
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+
+	// spring-retry (낙관적 락 재시도)
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 tasks.named('test') {

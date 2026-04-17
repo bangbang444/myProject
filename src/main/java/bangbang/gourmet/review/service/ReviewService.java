@@ -19,6 +19,9 @@ import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +44,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
+    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public Long createReview(Long restaurantId, Long userId, ReviewCreateRequest request, List<MultipartFile> images) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
@@ -105,6 +109,7 @@ public class ReviewService {
                 .toList();
     }
 
+    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public void updateReview(Long userId, Long reviewId, ReviewUpdateRequest request, List<MultipartFile> newImages) {
         // 1. 리뷰 조회 및 권한 확인
@@ -149,6 +154,7 @@ public class ReviewService {
         }
     }
 
+    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public void deleteReview(Long userId, Long reviewId) {
         // 1. 리뷰 조회
