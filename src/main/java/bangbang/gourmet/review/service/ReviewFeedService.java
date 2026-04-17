@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,12 @@ public class ReviewFeedService {
             return List.of();
         }
 
-        List<Review> reviews = reviewRepository.findAllWithDetailsByIds(reviewIds);
+        Map<Long, Review> reviewMap = reviewRepository.findAllWithDetailsByIds(reviewIds).stream()
+                .collect(Collectors.toMap(Review::getId, r -> r));
+        List<Review> reviews = reviewIds.stream()
+                .map(reviewMap::get)
+                .filter(Objects::nonNull)
+                .toList();
 
         Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(reviewIds).stream()
                 .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
