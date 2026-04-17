@@ -10,22 +10,27 @@ import bangbang.gourmet.review.entity.Comment;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
-import bangbang.gourmet.social.repository.FollowRepository;
 import bangbang.gourmet.social.repository.ReviewLikeRepository;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewFeedService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
-    private final FollowRepository followRepository;
     private final CommentRepository commentRepository;
     private final ReviewLikeRepository reviewLikeRepository;
 
@@ -35,23 +40,37 @@ public class ReviewFeedService {
             throw new BadRequestException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // 1. 내가 팔로우하는 유저들의 ID 목록 조회
-        List<Long> followingIds = followRepository.findFollowingIdsByFollowerId(userId);
+        long t1 = System.currentTimeMillis();
+        List<Long> reviewIds = reviewRepository.findFeedIdsByFollowerId(userId, PageRequest.of(0, 20));
+        log.info("[피드] 피드 ID 조회: {}ms", System.currentTimeMillis() - t1);
 
-        // 2. 만약 팔로우하는 사람이 없다면 빈 리스트 반환 (혹은 추천 피드)
-        if (followingIds.isEmpty()) {
+        if (reviewIds.isEmpty()) {
             return List.of();
         }
 
-        List<Review> reviews = reviewRepository.findAllByUserIds(followingIds);
+        long t2 = System.currentTimeMillis();
+        List<Review> reviews = reviewRepository.findAllWithDetailsByIds(reviewIds);
+        log.info("[피드] 리뷰 상세 조회: {}ms", System.currentTimeMillis() - t2);
 
+        long t3 = System.currentTimeMillis();
+        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(reviewIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        log.info("[피드] likeCount 배치 조회: {}ms", System.currentTimeMillis() - t3);
 
-        // TODO: 3번 쿼리(n+1) 문제, 리뷰 목록으로 한번에 조회하기
+        long t4 = System.currentTimeMillis();
+        Map<Long, Long> commentCountMap = commentRepository.countByReviewIds(reviewIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+        log.info("[피드] commentCount 배치 조회: {}ms", System.currentTimeMillis() - t4);
+
+        long t5 = System.currentTimeMillis();
+        Set<Long> likedReviewIds = Set.copyOf(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(userId, reviewIds));
+        log.info("[피드] isLiked 배치 조회: {}ms", System.currentTimeMillis() - t5);
+
         return reviews.stream()
                 .map(review -> {
-                    long likeCount = reviewLikeRepository.countByReview(review);
-                    long commentCount = commentRepository.countByReview(review);
-                    boolean isLiked = reviewLikeRepository.existsByUserIdAndReviewId(userId, review.getId());
+                    long likeCount = likeCountMap.getOrDefault(review.getId(), 0L);
+                    long commentCount = commentCountMap.getOrDefault(review.getId(), 0L);
+                    boolean isLiked = likedReviewIds.contains(review.getId());
                     return ReviewFeedResponse.of(review, likeCount, commentCount, isLiked);
                 })
                 .toList();
