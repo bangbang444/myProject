@@ -3,6 +3,7 @@ package bangbang.gourmet.review.service;
 import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.review.dto.CursorPageResponse;
 import bangbang.gourmet.review.dto.FeedDetailCommentResponse;
 import bangbang.gourmet.review.dto.FeedDetailResponse;
 import bangbang.gourmet.review.dto.ReviewCountDto;
@@ -37,33 +38,37 @@ public class ReviewFeedService {
     private final ReviewLikeRepository reviewLikeRepository;
 
     @Transactional(readOnly = true)
-    public List<ReviewFeedResponse> getFollowerFeed(Long userId) {
+    public CursorPageResponse<ReviewFeedResponse> getFollowerFeed(Long userId, Long cursorId, int size) {
         if (!userRepository.existsById(userId)) {
             throw new BadRequestException(ErrorCode.USER_NOT_FOUND);
         }
 
-        List<Long> reviewIds = reviewRepository.findFeedIdsByFollowerId(userId, PageRequest.of(0, 20));
+        List<Long> reviewIds = reviewRepository.findFeedIdsByFollowerIdWithCursor(
+                userId, cursorId, PageRequest.of(0, size + 1));
 
-        if (reviewIds.isEmpty()) {
-            return List.of();
+        boolean hasNext = reviewIds.size() > size;
+        List<Long> pageIds = hasNext ? reviewIds.subList(0, size) : reviewIds;
+
+        if (pageIds.isEmpty()) {
+            return CursorPageResponse.of(List.of(), null, false);
         }
 
-        Map<Long, Review> reviewMap = reviewRepository.findAllWithDetailsByIds(reviewIds).stream()
+        Map<Long, Review> reviewMap = reviewRepository.findAllWithDetailsByIds(pageIds).stream()
                 .collect(Collectors.toMap(Review::getId, r -> r));
-        List<Review> reviews = reviewIds.stream()
+        List<Review> reviews = pageIds.stream()
                 .map(reviewMap::get)
                 .filter(Objects::nonNull)
                 .toList();
 
-        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(reviewIds).stream()
+        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(pageIds).stream()
                 .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
 
-        Map<Long, Long> commentCountMap = commentRepository.countByReviewIds(reviewIds).stream()
+        Map<Long, Long> commentCountMap = commentRepository.countByReviewIds(pageIds).stream()
                 .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
 
-        Set<Long> likedReviewIds = Set.copyOf(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(userId, reviewIds));
+        Set<Long> likedReviewIds = Set.copyOf(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(userId, pageIds));
 
-        return reviews.stream()
+        List<ReviewFeedResponse> items = reviews.stream()
                 .map(review -> {
                     long likeCount = likeCountMap.getOrDefault(review.getId(), 0L);
                     long commentCount = commentCountMap.getOrDefault(review.getId(), 0L);
@@ -71,6 +76,9 @@ public class ReviewFeedService {
                     return ReviewFeedResponse.of(review, likeCount, commentCount, isLiked);
                 })
                 .toList();
+
+        Long nextCursorId = hasNext ? pageIds.get(pageIds.size() - 1) : null;
+        return CursorPageResponse.of(items, nextCursorId, hasNext);
     }
 
     @Transactional(readOnly = true)

@@ -34,6 +34,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "order by r.createdDate desc")
     List<Long> findFeedIdsByFollowerId(@Param("userId") Long userId, Pageable pageable);
 
+    @Query("select r.id from Review r " +
+            "join Follow f on f.following.id = r.user.id " +
+            "where f.follower.id = :userId " +
+            "and r.isPublic = true " +
+            "and (:cursorId is null or r.id < :cursorId) " +
+            "order by r.id desc")
+    List<Long> findFeedIdsByFollowerIdWithCursor(
+            @Param("userId") Long userId,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable);
+
     @Query("select distinct r from Review r " +
             "join fetch r.user " +
             "join fetch r.restaurant " +
