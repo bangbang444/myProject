@@ -18,7 +18,7 @@ public class FollowInserter {
             followRepository.save(Follow.builder().follower(follower).following(following).build());
             return true;
         } catch (DataIntegrityViolationException e) {
-            return false;
+            return true; // 동시 요청으로 이미 팔로우된 상태
         }
     }
 }
