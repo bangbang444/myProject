@@ -1,5 +1,6 @@
 package bangbang.gourmet.user.controller;
 
+import bangbang.gourmet.common.annotation.UserId;
 import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.common.security.jwt.JwtConstants;
@@ -45,5 +46,24 @@ public class UserController {
 
         // Response Body에도 refreshToken 포함 (모바일 앱용)
         return Response.success(SuccessCode.SUCCESS, loginResponse);
+    }
+
+    @PostMapping("/auth/logout")
+    public Response<Void> logout(
+            @UserId Long userId,
+            HttpServletResponse httpServletResponse
+    ) {
+        userService.logout(userId);
+
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .maxAge(0)
+                .path("/")
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+
+        return Response.success(SuccessCode.SUCCESS, null);
     }
 }
