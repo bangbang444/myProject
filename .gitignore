@@ -50,3 +50,6 @@ NUL
 # k6
 /k6/**
 /docs/**
+
+# p6spy
+spy.log
