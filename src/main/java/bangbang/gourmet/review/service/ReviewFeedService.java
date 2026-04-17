@@ -82,6 +82,50 @@ public class ReviewFeedService {
     }
 
     @Transactional(readOnly = true)
+    public CursorPageResponse<ReviewFeedResponse> getMyReviews(Long userId, boolean isPublic, Long cursorId, int size) {
+        if (!userRepository.existsById(userId)) {
+            throw new BadRequestException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        List<Long> reviewIds = reviewRepository.findMyReviewIdsByUserIdWithCursor(
+                userId, isPublic, cursorId, PageRequest.of(0, size + 1));
+
+        boolean hasNext = reviewIds.size() > size;
+        List<Long> pageIds = hasNext ? reviewIds.subList(0, size) : reviewIds;
+
+        if (pageIds.isEmpty()) {
+            return CursorPageResponse.of(List.of(), null, false);
+        }
+
+        Map<Long, Review> reviewMap = reviewRepository.findAllWithDetailsByIds(pageIds).stream()
+                .collect(Collectors.toMap(Review::getId, r -> r));
+        List<Review> reviews = pageIds.stream()
+                .map(reviewMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(pageIds).stream()
+                .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
+
+        Map<Long, Long> commentCountMap = commentRepository.countByReviewIds(pageIds).stream()
+                .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
+
+        Set<Long> likedReviewIds = Set.copyOf(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(userId, pageIds));
+
+        List<ReviewFeedResponse> items = reviews.stream()
+                .map(review -> {
+                    long likeCount = likeCountMap.getOrDefault(review.getId(), 0L);
+                    long commentCount = commentCountMap.getOrDefault(review.getId(), 0L);
+                    boolean isLiked = likedReviewIds.contains(review.getId());
+                    return ReviewFeedResponse.of(review, likeCount, commentCount, isLiked);
+                })
+                .toList();
+
+        Long nextCursorId = hasNext ? pageIds.get(pageIds.size() - 1) : null;
+        return CursorPageResponse.of(items, nextCursorId, hasNext);
+    }
+
+    @Transactional(readOnly = true)
     public FeedDetailResponse getFeedDetail(Long reviewId, Long userId) {
         Review review = reviewRepository.findByIdWithDetails(reviewId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.REVIEW_NOT_FOUND));

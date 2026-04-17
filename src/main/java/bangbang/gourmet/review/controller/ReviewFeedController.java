@@ -29,6 +29,15 @@ public class ReviewFeedController {
         return Response.success(SuccessCode.SUCCESS, reviewFeedService.getFollowerFeed(userId, cursorId, size));
     }
 
+    @GetMapping("/me")
+    public Response<CursorPageResponse<ReviewFeedResponse>> getMyReviews(
+            @UserId Long userId,
+            @RequestParam boolean isPublic,
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam(defaultValue = "12") int size) {
+        return Response.success(SuccessCode.SUCCESS, reviewFeedService.getMyReviews(userId, isPublic, cursorId, size));
+    }
+
     @GetMapping("/feed/{feedId}")
     public Response<FeedDetailResponse> getFeedDetail(
             @PathVariable Long feedId,
