@@ -18,6 +18,9 @@ public class Restaurant extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long restaurantId;
 
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     private String restaurantName;
 
@@ -84,14 +87,12 @@ public class Restaurant extends BaseEntity {
         this.mainCategory = mainCategory;
     }
 
-    // TODO: 동시성 해결
     public void addReview(Double newRating){
         double totalRating = this.averageRating * this.reviewCount;
         this.reviewCount++;
         this.averageRating = (totalRating + newRating) / this.reviewCount;
     }
 
-    // TODO: 동시성 해결
     public void decreaseReviewCount(Double rating) {
         if (this.reviewCount <= 0) return; // 방어 코드
 
@@ -106,7 +107,6 @@ public class Restaurant extends BaseEntity {
         }
     }
 
-    // TODO: 동시성 해결
     public void updateReviewRating(Double oldRating, Double newRating) {
         if (this.reviewCount <= 0) return;
 
