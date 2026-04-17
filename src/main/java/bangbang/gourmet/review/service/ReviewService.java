@@ -30,9 +30,14 @@ public class ReviewService {
     private final ReviewRetryService reviewRetryService;
 
     public Long createReview(Long restaurantId, Long userId, ReviewCreateRequest request, List<MultipartFile> images) {
-        // TODO: DB 최종 실패 시 고아 S3 파일 정리 배치 필요 (S3 키 목록 vs DB 비교)
         List<String> imageKeys = uploadImages(images);
-        return reviewRetryService.saveReview(restaurantId, userId, request, imageKeys);
+        try {
+            return reviewRetryService.saveReview(restaurantId, userId, request, imageKeys);
+        } catch (Exception e) {
+            // TODO: S3 삭제 실패 시 고아 파일 잔존 가능 → 배치 스케줄러로 2차 정리 필요
+            imageKeys.forEach(key -> s3Service.delete(SNS, key));
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)
