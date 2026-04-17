@@ -5,7 +5,6 @@ import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.social.dto.FollowStatusResponse;
 import bangbang.gourmet.social.dto.FollowUserResponse;
-import bangbang.gourmet.social.entity.Follow;
 import bangbang.gourmet.social.repository.FollowRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
@@ -22,8 +21,8 @@ import java.util.Set;
 public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final FollowInserter followInserter;
 
-    @Transactional
     public FollowStatusResponse toggleFollow(Long followerId, Long followingId){
         // 자기 자신 팔로우 방지
         if(followerId.equals(followingId)){
@@ -41,12 +40,8 @@ public class FollowService {
             followRepository.deleteByFollowerAndFollowing(follower, following);
             return new FollowStatusResponse(false);
         }else{
-            Follow follow = Follow.builder()
-                    .follower(follower)
-                    .following(following)
-                    .build();
-            followRepository.save(follow);
-            return new FollowStatusResponse(true);
+            boolean inserted = followInserter.tryInsert(follower, following);
+            return new FollowStatusResponse(inserted);
         }
     }
 
