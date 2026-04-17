@@ -44,7 +44,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("select distinct r from Review r " +
             "join fetch r.user " +
             "join fetch r.restaurant " +
-            //"left join fetch r.images " +
             "where r.id = :reviewId")
     Optional<Review> findByIdWithDetails(@Param("reviewId") Long reviewId);
 

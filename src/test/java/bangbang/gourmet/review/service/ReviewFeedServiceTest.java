@@ -2,6 +2,7 @@ package bangbang.gourmet.review.service;
 
 import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.restaurant.entity.Restaurant;
+import bangbang.gourmet.review.dto.ReviewCountDto;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
@@ -20,7 +21,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,14 +64,10 @@ class ReviewFeedServiceTest {
         given(reviewRepository.findAllWithDetailsByIds(anyList()))
                 .willReturn(List.of(review));
 
-        Object[] likeRow = {review.getId(), 5L};
-        Object[] commentRow = {review.getId(), 3L};
-        List<Object[]> likeCountResult = new ArrayList<>();
-        likeCountResult.add(likeRow);
-        List<Object[]> commentCountResult = new ArrayList<>();
-        commentCountResult.add(commentRow);
-        given(reviewLikeRepository.countByReviewIds(anyList())).willReturn(likeCountResult);
-        given(commentRepository.countByReviewIds(anyList())).willReturn(commentCountResult);
+        given(reviewLikeRepository.countByReviewIds(anyList()))
+                .willReturn(List.of(new ReviewCountDto(review.getId(), 5L)));
+        given(commentRepository.countByReviewIds(anyList()))
+                .willReturn(List.of(new ReviewCountDto(review.getId(), 3L)));
         given(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(eq(currentUserId), anyList()))
                 .willReturn(List.of(review.getId()));
 

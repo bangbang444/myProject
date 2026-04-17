@@ -1,5 +1,6 @@
 package bangbang.gourmet.social.repository;
 
+import bangbang.gourmet.review.dto.ReviewCountDto;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.social.entity.ReviewLike;
 import bangbang.gourmet.user.entity.User;
@@ -15,8 +16,9 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     long countByReview(Review review);
     boolean existsByUserIdAndReviewId(Long userId, Long reviewId);
 
-    @Query("select rl.review.id, count(rl) from ReviewLike rl where rl.review.id in :reviewIds group by rl.review.id")
-    List<Object[]> countByReviewIds(@Param("reviewIds") List<Long> reviewIds);
+    @Query("select new bangbang.gourmet.review.dto.ReviewCountDto(rl.review.id, count(rl)) " +
+            "from ReviewLike rl where rl.review.id in :reviewIds group by rl.review.id")
+    List<ReviewCountDto> countByReviewIds(@Param("reviewIds") List<Long> reviewIds);
 
     @Query("select rl.review.id from ReviewLike rl where rl.user.id = :userId and rl.review.id in :reviewIds")
     List<Long> findLikedReviewIdsByUserIdAndReviewIds(@Param("userId") Long userId, @Param("reviewIds") List<Long> reviewIds);

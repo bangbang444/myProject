@@ -5,6 +5,7 @@ import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
 import bangbang.gourmet.review.dto.FeedDetailCommentResponse;
 import bangbang.gourmet.review.dto.FeedDetailResponse;
+import bangbang.gourmet.review.dto.ReviewCountDto;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Comment;
 import bangbang.gourmet.review.entity.Review;
@@ -40,31 +41,21 @@ public class ReviewFeedService {
             throw new BadRequestException(ErrorCode.USER_NOT_FOUND);
         }
 
-        long t1 = System.currentTimeMillis();
         List<Long> reviewIds = reviewRepository.findFeedIdsByFollowerId(userId, PageRequest.of(0, 20));
-        log.info("[피드] 피드 ID 조회: {}ms", System.currentTimeMillis() - t1);
 
         if (reviewIds.isEmpty()) {
             return List.of();
         }
 
-        long t2 = System.currentTimeMillis();
         List<Review> reviews = reviewRepository.findAllWithDetailsByIds(reviewIds);
-        log.info("[피드] 리뷰 상세 조회: {}ms", System.currentTimeMillis() - t2);
 
-        long t3 = System.currentTimeMillis();
         Map<Long, Long> likeCountMap = reviewLikeRepository.countByReviewIds(reviewIds).stream()
-                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
-        log.info("[피드] likeCount 배치 조회: {}ms", System.currentTimeMillis() - t3);
+                .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
 
-        long t4 = System.currentTimeMillis();
         Map<Long, Long> commentCountMap = commentRepository.countByReviewIds(reviewIds).stream()
-                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
-        log.info("[피드] commentCount 배치 조회: {}ms", System.currentTimeMillis() - t4);
+                .collect(Collectors.toMap(ReviewCountDto::reviewId, ReviewCountDto::count));
 
-        long t5 = System.currentTimeMillis();
         Set<Long> likedReviewIds = Set.copyOf(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(userId, reviewIds));
-        log.info("[피드] isLiked 배치 조회: {}ms", System.currentTimeMillis() - t5);
 
         return reviews.stream()
                 .map(review -> {
