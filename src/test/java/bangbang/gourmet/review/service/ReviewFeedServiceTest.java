@@ -2,11 +2,11 @@ package bangbang.gourmet.review.service;
 
 import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.restaurant.entity.Restaurant;
+import bangbang.gourmet.review.dto.ReviewCountDto;
 import bangbang.gourmet.review.dto.ReviewFeedResponse;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.CommentRepository;
 import bangbang.gourmet.review.repository.ReviewRepository;
-import bangbang.gourmet.social.repository.FollowRepository;
 import bangbang.gourmet.social.repository.ReviewLikeRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
@@ -18,24 +18,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewFeedServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
-
-    @Mock
-    private FollowRepository followRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -57,17 +56,20 @@ class ReviewFeedServiceTest {
         Long followingId = 2L;
 
         given(userRepository.existsById(currentUserId)).willReturn(true);
-        given(followRepository.findFollowingIdsByFollowerId(currentUserId))
-                .willReturn(List.of(followingId));
 
         // 2. 2번 유저가 쓴 가짜 리뷰 생성
         Review review = createMockReview(followingId);
-        given(reviewRepository.findAllByUserIds(List.of(followingId)))
+        given(reviewRepository.findFeedIdsByFollowerId(eq(currentUserId), any(Pageable.class)))
+                .willReturn(List.of(review.getId()));
+        given(reviewRepository.findAllWithDetailsByIds(anyList()))
                 .willReturn(List.of(review));
 
-        given(reviewLikeRepository.countByReview(review)).willReturn(5L); // 좋아요 5개라고 가정
-        given(commentRepository.countByReview(review)).willReturn(3L); // 댓글 3개라고 가정
-        given(reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, review.getId())).willReturn(true); // 내가 좋아요 누름
+        given(reviewLikeRepository.countByReviewIds(anyList()))
+                .willReturn(List.of(new ReviewCountDto(review.getId(), 5L)));
+        given(commentRepository.countByReviewIds(anyList()))
+                .willReturn(List.of(new ReviewCountDto(review.getId(), 3L)));
+        given(reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(eq(currentUserId), anyList()))
+                .willReturn(List.of(review.getId()));
 
         // when (실행)
         List<ReviewFeedResponse> result = reviewFeedService.getFollowerFeed(currentUserId);
@@ -87,8 +89,7 @@ class ReviewFeedServiceTest {
         // given
         Long currentUserId = 1L;
         given(userRepository.existsById(currentUserId)).willReturn(true);
-
-        given(followRepository.findFollowingIdsByFollowerId(currentUserId))
+        given(reviewRepository.findFeedIdsByFollowerId(eq(currentUserId), any(Pageable.class)))
                 .willReturn(List.of());
 
         // when
@@ -96,8 +97,6 @@ class ReviewFeedServiceTest {
 
         // then
         assertThat(result).isEmpty();
-        // Repository는 호출조차 되지 않아야 효율적입니다.
-        verify(reviewRepository, never()).findAllByUserIds(any());
     }
 
     @Test
@@ -108,11 +107,9 @@ class ReviewFeedServiceTest {
         Long followingId = 2L;
 
         given(userRepository.existsById(currentUserId)).willReturn(true);
-        given(followRepository.findFollowingIdsByFollowerId(currentUserId))
-                .willReturn(List.of(followingId));
 
-        // isPublic=false인 비공개 리뷰는 findAllByUserIds 쿼리 자체에서 걸러짐
-        given(reviewRepository.findAllByUserIds(List.of(followingId)))
+        // isPublic=false인 비공개 리뷰는 findFeedIdsByFollowerId 쿼리 자체에서 걸러짐
+        given(reviewRepository.findFeedIdsByFollowerId(eq(currentUserId), any(Pageable.class)))
                 .willReturn(List.of()); // 쿼리 레벨에서 필터링됐다고 가정
 
         // when

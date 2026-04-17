@@ -27,14 +27,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "order by r.createdDate desc")
     List<Review> findAllByRestaurantIdWithImages(@Param("restaurantId") Long restaurantId);
 
+    @Query("select r.id from Review r " +
+            "join Follow f on f.following.id = r.user.id " +
+            "where f.follower.id = :userId " +
+            "and r.isPublic = true " +
+            "order by r.createdDate desc")
+    List<Long> findFeedIdsByFollowerId(@Param("userId") Long userId, Pageable pageable);
+
     @Query("select distinct r from Review r " +
             "join fetch r.user " +
             "join fetch r.restaurant " +
             "left join fetch r.images " +
-            "where r.user.id in :userIds " +
-            "and r.isPublic = true " +
-            "order by r.createdDate desc")
-    List<Review> findAllByUserIds(@Param("userIds") List<Long> userIds);
+            "where r.id in :ids")
+    List<Review> findAllWithDetailsByIds(@Param("ids") List<Long> ids);
 
     @Query("select distinct r from Review r " +
             "join fetch r.user " +

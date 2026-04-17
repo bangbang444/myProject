@@ -27,7 +27,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -102,28 +105,25 @@ class ReviewFeedQueryTest {
         stats.setStatisticsEnabled(true);
         stats.clear();
 
-        // ReviewFeedService.getFollowerFeed() 와 동일한 흐름
-        List<Long> followingIds = followRepository.findFollowingIdsByFollowerId(viewer.getId()); // 쿼리 1
-        List<Review> reviews = reviewRepository.findAllByUserIds(followingIds);                  // 쿼리 2
+        // ReviewFeedService.getFollowerFeed() 와 동일한 흐름 (배치 조회)
+        List<Long> reviewIds = reviewRepository.findFeedIdsByFollowerId(viewer.getId(), PageRequest.of(0, 100)); // 쿼리 1
+        List<Review> reviews = reviewRepository.findAllWithDetailsByIds(reviewIds);                              // 쿼리 2
 
-        for (Review review : reviews) {
-            reviewLikeRepository.countByReview(review);                                          // 쿼리 3,6,9 ...
-            commentRepository.countByReview(review);                                             // 쿼리 4,7,10 ...
-            reviewLikeRepository.existsByUserIdAndReviewId(viewer.getId(), review.getId());      // 쿼리 5,8,11 ...
-        }
+        reviewLikeRepository.countByReviewIds(reviewIds);                                                        // 쿼리 3
+        commentRepository.countByReviewIds(reviewIds);                                                           // 쿼리 4
+        reviewLikeRepository.findLikedReviewIdsByUserIdAndReviewIds(viewer.getId(), reviewIds);                  // 쿼리 5
 
         long totalQueries = stats.getPrepareStatementCount();
-        int expectedWithNPlusOne = 2 + (3 * reviewCount); // follow + review + (like+comment+isLiked)*N
+        int expectedFixed = 5; // feedIds + details(user+restaurant+images) + likeCount배치 + commentCount배치 + isLiked배치
 
         System.out.println("\n========== 피드 조회 쿼리 분석 ==========");
-        System.out.println("팔로잉 수  : " + followingIds.size());
         System.out.println("리뷰 수    : " + reviews.size());
         System.out.println("총 쿼리 수 : " + totalQueries);
-        System.out.println("N+1 예상   : " + expectedWithNPlusOne + " (follow + review + 3*N)");
+        System.out.println("예상 쿼리  : " + expectedFixed + " (고정)");
         System.out.println("==========================================\n");
 
         assertThat(reviews).hasSize(reviewCount);
-        assertThat(totalQueries).isEqualTo(expectedWithNPlusOne); // N+1 확인
+        assertThat(totalQueries).isEqualTo(expectedFixed);
     }
 
     private Review createReview(User author, Restaurant restaurant, int idx) {
