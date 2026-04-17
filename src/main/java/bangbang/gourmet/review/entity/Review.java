@@ -15,6 +15,10 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(indexes = {
+        @Index(name = "idx_review_user_public_created", columnList = "user_id, is_public, created_date DESC"),
+        @Index(name = "idx_review_public_created", columnList = "is_public, created_date DESC")
+})
 public class Review extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

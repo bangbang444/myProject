@@ -9,7 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "follow")
+@Table(name = "follow", indexes = {
+        @Index(name = "idx_follow_follower_covering", columnList = "follower_id, following_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Follow extends BaseEntity{
