@@ -37,7 +37,7 @@ class ReviewServiceTest {
 
     @Mock private ReviewRepository reviewRepository;
     @Mock private S3Service s3Service;
-    @Mock private ReviewDbService reviewDbService;
+    @Mock private ReviewRetryService reviewRetryService;
 
     @Test
     @DisplayName("이미지가 있는 리뷰 작성 시 S3 업로드 후 DB 저장을 위임한다")
@@ -50,13 +50,13 @@ class ReviewServiceTest {
         List<MultipartFile> images = List.of(image);
 
         given(s3Service.uploadImage(any(), anyString(), anyString())).willReturn("uploaded-key.jpg");
-        given(reviewDbService.saveReview(eq(restaurantId), eq(userId), eq(request), anyList())).willReturn(100L);
+        given(reviewRetryService.saveReview(eq(restaurantId), eq(userId), eq(request), anyList())).willReturn(100L);
 
         Long result = reviewService.createReview(restaurantId, userId, request, images);
 
         assertThat(result).isEqualTo(100L);
         verify(s3Service, times(1)).uploadImage(any(), eq("sns"), eq("reviews"));
-        verify(reviewDbService, times(1)).saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of("uploaded-key.jpg")));
+        verify(reviewRetryService, times(1)).saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of("uploaded-key.jpg")));
     }
 
     @Test
@@ -66,12 +66,12 @@ class ReviewServiceTest {
         Long userId = 1L;
         ReviewCreateRequest request = new ReviewCreateRequest(5.0, 5.0, 5.0, "글만 있는 리뷰", "한식", true);
 
-        given(reviewDbService.saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of()))).willReturn(100L);
+        given(reviewRetryService.saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of()))).willReturn(100L);
 
         reviewService.createReview(restaurantId, userId, request, List.of());
 
         verify(s3Service, never()).uploadImage(any(), anyString(), anyString());
-        verify(reviewDbService, times(1)).saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of()));
+        verify(reviewRetryService, times(1)).saveReview(eq(restaurantId), eq(userId), eq(request), eq(List.of()));
     }
 
     @Test
@@ -87,14 +87,14 @@ class ReviewServiceTest {
         reviewService.updateReview(userId, reviewId, request, List.of(newImage));
 
         verify(s3Service, times(1)).uploadImage(any(), anyString(), anyString());
-        verify(reviewDbService, times(1)).updateReview(eq(userId), eq(reviewId), eq(request), eq(List.of("new-key.jpg")));
+        verify(reviewRetryService, times(1)).updateReview(eq(userId), eq(reviewId), eq(request), eq(List.of("new-key.jpg")));
     }
 
     @Test
     @DisplayName("리뷰 삭제 시 DB 삭제를 위임한다")
     void deleteReview_DelegatesToDbService() {
         reviewService.deleteReview(1L, 100L);
-        verify(reviewDbService, times(1)).deleteReview(1L, 100L);
+        verify(reviewRetryService, times(1)).deleteReview(1L, 100L);
     }
 
     @Test

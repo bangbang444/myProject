@@ -16,11 +16,10 @@ import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -36,11 +35,10 @@ public class ReviewDbService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
-    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public Long saveReview(Long restaurantId, Long userId, ReviewCreateRequest request, List<String> imageKeys) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new BadRequestException(ErrorCode.RESTAURANT_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException(ErrorCode.USER_NOT_FOUND));
@@ -67,7 +65,6 @@ public class ReviewDbService {
         return savedReview.getId();
     }
 
-    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public void updateReview(Long userId, Long reviewId, ReviewUpdateRequest request, List<String> newImageKeys) {
         Review review = reviewRepository.findById(reviewId)
@@ -80,7 +77,7 @@ public class ReviewDbService {
         Double oldAvgRating = review.getAverageRating();
         review.update(request.content(), request.tasteRating(), request.atmosphereRating(), request.serviceRating());
         Double newAvgRating = review.getAverageRating();
-        if (!oldAvgRating.equals(newAvgRating)) {
+        if (Double.compare(oldAvgRating, newAvgRating) != 0) {
             review.getRestaurant().updateReviewRating(oldAvgRating, newAvgRating);
         }
 
@@ -91,9 +88,11 @@ public class ReviewDbService {
                     throw new BadRequestException(ErrorCode.INVALID_IMAGE_OWNER);
                 }
             }
-            imagesToDelete.forEach(image -> s3Service.delete(SNS, image.getImageUrl()));
+            List<String> keysToDelete = imagesToDelete.stream()
+                    .map(ReviewImage::getImageUrl).toList();
             review.getImages().removeAll(imagesToDelete);
             reviewImageRepository.deleteAllInBatch(imagesToDelete);
+            registerS3DeleteAfterCommit(keysToDelete);
         }
 
         newImageKeys.forEach(review::addReviewImage);
@@ -102,7 +101,6 @@ public class ReviewDbService {
         }
     }
 
-    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 5, backoff = @Backoff(delay = 100, maxDelay = 300, random = true))
     @Transactional
     public void deleteReview(Long userId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
@@ -112,9 +110,24 @@ public class ReviewDbService {
             throw new ForbiddenException(ErrorCode.NOT_OWNER_ERROR);
         }
 
-        review.getImages().forEach(image -> s3Service.delete(SNS, image.getImageUrl()));
+        Restaurant restaurant = review.getRestaurant();
+        double avgRating = review.getAverageRating();
+        List<String> keysToDelete = review.getImages().stream()
+                .map(ReviewImage::getImageUrl).toList();
+
         reviewImageRepository.deleteAllInBatch(review.getImages());
         reviewRepository.delete(review);
-        review.getRestaurant().decreaseReviewCount(review.getAverageRating());
+        restaurant.decreaseReviewCount(avgRating);
+
+        registerS3DeleteAfterCommit(keysToDelete);
+    }
+
+    private void registerS3DeleteAfterCommit(List<String> keys) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                keys.forEach(key -> s3Service.delete(SNS, key));
+            }
+        });
     }
 }

@@ -27,12 +27,12 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final S3Service s3Service;
-    private final ReviewDbService reviewDbService;
+    private final ReviewRetryService reviewRetryService;
 
     public Long createReview(Long restaurantId, Long userId, ReviewCreateRequest request, List<MultipartFile> images) {
         // TODO: DB 최종 실패 시 고아 S3 파일 정리 배치 필요 (S3 키 목록 vs DB 비교)
         List<String> imageKeys = uploadImages(images);
-        return reviewDbService.saveReview(restaurantId, userId, request, imageKeys);
+        return reviewRetryService.saveReview(restaurantId, userId, request, imageKeys);
     }
 
     @Transactional(readOnly = true)
@@ -61,11 +61,11 @@ public class ReviewService {
 
     public void updateReview(Long userId, Long reviewId, ReviewUpdateRequest request, List<MultipartFile> newImages) {
         List<String> newImageKeys = uploadImages(newImages);
-        reviewDbService.updateReview(userId, reviewId, request, newImageKeys);
+        reviewRetryService.updateReview(userId, reviewId, request, newImageKeys);
     }
 
     public void deleteReview(Long userId, Long reviewId) {
-        reviewDbService.deleteReview(userId, reviewId);
+        reviewRetryService.deleteReview(userId, reviewId);
     }
 
     private List<String> uploadImages(List<MultipartFile> images) {
