@@ -23,6 +23,19 @@ public class AsyncConfig {
         return executor;
     }
 
+    @Bean(name = "notificationExecutor")
+    public ThreadPoolTaskExecutor notificationExecutor() {
+        ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(2);
+        ex.setMaxPoolSize(4);
+        ex.setQueueCapacity(100);
+        ex.setThreadNamePrefix("notification-");
+        ex.setWaitForTasksToCompleteOnShutdown(true);
+        ex.setAwaitTerminationSeconds(5);
+        ex.initialize();
+        return ex;
+    }
+
     @Bean(name = "discordExecutor")
     public ThreadPoolTaskExecutor discordExecutor() {
         ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
