@@ -2,6 +2,7 @@ package bangbang.gourmet.review.service;
 
 import bangbang.gourmet.common.exception.model.ForbiddenException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
+import bangbang.gourmet.notification.service.NotificationService;
 import bangbang.gourmet.review.dto.CommentCreateResponse;
 import bangbang.gourmet.review.dto.CommentResponse;
 import bangbang.gourmet.review.dto.CommentUpdateRequest;
@@ -38,6 +39,8 @@ class CommentServiceTest {
     private UserRepository userRepository;
     @Mock
     private ReviewRepository reviewRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private CommentService commentService;
