@@ -1,6 +1,7 @@
 package bangbang.gourmet.social.service;
 
 import bangbang.gourmet.common.exception.model.NotFoundException;
+import bangbang.gourmet.notification.service.NotificationService;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.social.dto.ReviewLikeResponse;
@@ -37,6 +38,8 @@ class ReviewLikeServiceTest {
     private UserRepository userRepository;
     @Mock
     private ReviewRepository reviewRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ReviewLikeService reviewLikeService;
