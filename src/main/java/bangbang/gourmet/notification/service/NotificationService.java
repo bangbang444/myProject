@@ -28,6 +28,6 @@ public class NotificationService {
                 .targetId(targetId)
                 .build());
 
-        fcmService.sendNotification(receiver.getFcmToken(), type, sender.getNickname());
+        fcmService.sendNotification(receiver.getFcmToken(), type, sender.getNickname(), type.getUrl(targetId));
     }
 }

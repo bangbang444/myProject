@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class FcmService {
 
     @Async("notificationExecutor")
-    public void sendNotification(String fcmToken, NotificationType type, String senderNickname) {
+    public void sendNotification(String fcmToken, NotificationType type, String senderNickname, String url) {
         if (fcmToken == null || fcmToken.isEmpty()) {
             return;
         }
@@ -25,6 +25,7 @@ public class FcmService {
                         .setTitle(type.getTitle())
                         .setBody(type.getBody(senderNickname))
                         .build())
+                .putData("url", url != null ? url : "")
                 .build();
 
         try {
