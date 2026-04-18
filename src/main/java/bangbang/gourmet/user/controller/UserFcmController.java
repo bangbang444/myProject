@@ -5,6 +5,7 @@ import bangbang.gourmet.common.response.Response;
 import bangbang.gourmet.common.response.SuccessCode;
 import bangbang.gourmet.user.controller.dto.FcmTokenRequest;
 import bangbang.gourmet.user.service.UserFcmService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +19,7 @@ public class UserFcmController {
     @PostMapping
     public Response<Void> saveFcmToken(
             @UserId Long userId,
-            @RequestBody FcmTokenRequest request
+            @Valid @RequestBody FcmTokenRequest request
     ) {
         userFcmService.saveFcmToken(userId, request.fcmToken());
         return Response.success(SuccessCode.SUCCESS, null);

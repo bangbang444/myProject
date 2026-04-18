@@ -1,4 +1,6 @@
 package bangbang.gourmet.user.controller.dto;
 
-public record FcmTokenRequest(String fcmToken) {
+import jakarta.validation.constraints.NotBlank;
+
+public record FcmTokenRequest(@NotBlank String fcmToken) {
 }
