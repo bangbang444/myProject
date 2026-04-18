@@ -3,6 +3,8 @@ package bangbang.gourmet.review.service;
 import bangbang.gourmet.common.exception.model.ForbiddenException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.notification.entity.NotificationType;
+import bangbang.gourmet.notification.service.NotificationService;
 import bangbang.gourmet.review.dto.CommentCreateResponse;
 import bangbang.gourmet.review.dto.CommentResponse;
 import bangbang.gourmet.review.dto.CommentUpdateRequest;
@@ -24,6 +26,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentCreateResponse createComment(Long userId, Long reviewId, String content) {
@@ -40,6 +43,7 @@ public class CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+        notificationService.notify(review.getUser(), user, NotificationType.COMMENT, review.getId());
 
         return CommentCreateResponse.from(savedComment);
     }

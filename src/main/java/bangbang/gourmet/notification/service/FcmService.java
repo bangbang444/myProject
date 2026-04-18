@@ -6,12 +6,14 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class FcmService {
 
+    @Async("notificationExecutor")
     public void sendNotification(String fcmToken, NotificationType type, String senderNickname) {
         if (fcmToken == null || fcmToken.isEmpty()) {
             return;

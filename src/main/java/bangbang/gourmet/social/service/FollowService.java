@@ -3,6 +3,8 @@ package bangbang.gourmet.social.service;
 import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.notification.entity.NotificationType;
+import bangbang.gourmet.notification.service.NotificationService;
 import bangbang.gourmet.social.dto.FollowStatusResponse;
 import bangbang.gourmet.social.dto.FollowUserResponse;
 import bangbang.gourmet.social.repository.FollowRepository;
@@ -22,6 +24,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final FollowInserter followInserter;
+    private final NotificationService notificationService;
 
     public FollowStatusResponse toggleFollow(Long followerId, Long followingId){
         // 자기 자신 팔로우 방지
@@ -41,6 +44,9 @@ public class FollowService {
             return new FollowStatusResponse(false);
         }else{
             boolean inserted = followInserter.tryInsert(follower, following);
+            if (inserted) {
+                notificationService.notify(following, follower, NotificationType.FOLLOW, null);
+            }
             return new FollowStatusResponse(inserted);
         }
     }

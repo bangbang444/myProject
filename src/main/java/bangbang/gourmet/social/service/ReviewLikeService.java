@@ -3,6 +3,8 @@ package bangbang.gourmet.social.service;
 import bangbang.gourmet.common.exception.model.BadRequestException;
 import bangbang.gourmet.common.exception.model.NotFoundException;
 import bangbang.gourmet.common.response.ErrorCode;
+import bangbang.gourmet.notification.entity.NotificationType;
+import bangbang.gourmet.notification.service.NotificationService;
 import bangbang.gourmet.review.entity.Review;
 import bangbang.gourmet.review.repository.ReviewRepository;
 import bangbang.gourmet.social.dto.ReviewLikeResponse;
@@ -22,6 +24,7 @@ public class ReviewLikeService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ReviewLikeResponse toggleLike(Long userId, Long reviewId) {
@@ -42,6 +45,7 @@ public class ReviewLikeService {
         } else {
             reviewLikeRepository.save(ReviewLike.builder().user(user).review(review).build());
             isLiked = true;
+            notificationService.notify(review.getUser(), user, NotificationType.LIKE, review.getId());
         }
 
         // 3. 최신 좋아요 수 조회 및 DTO 반환
