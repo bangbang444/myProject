@@ -45,6 +45,9 @@ public class User extends BaseEntity {
     @Column(nullable = true)
     private String profileImageKey;
 
+    @Column(nullable = true)
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user")
     private List<Review> reviews = new ArrayList<>();
 
@@ -64,5 +67,13 @@ public class User extends BaseEntity {
 
     public void updateProfileImage(String profileImageKey){
         this.profileImageKey = profileImageKey;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    public void deleteFcmToken() {
+        this.fcmToken = null;
     }
 }

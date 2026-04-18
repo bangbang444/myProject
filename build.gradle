@@ -90,6 +90,12 @@ dependencies {
 	// spring-retry (낙관적 락 재시도)
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// FCM
+	implementation 'com.google.firebase:firebase-admin:9.2.0'
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 
 tasks.named('test') {

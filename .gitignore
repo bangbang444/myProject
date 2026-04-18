@@ -39,6 +39,7 @@ out/
 # 보안
 /src/main/resources/application*.yml
 /src/test/resources/application*.yml
+/src/main/resources/firebase/**
 
 # AI Assistant Guide (Local Only)
 CLAUDE.md
