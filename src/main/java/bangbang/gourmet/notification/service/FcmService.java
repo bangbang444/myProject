@@ -4,7 +4,6 @@ import bangbang.gourmet.notification.entity.NotificationType;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -21,10 +20,8 @@ public class FcmService {
 
         Message message = Message.builder()
                 .setToken(fcmToken)
-                .setNotification(Notification.builder()
-                        .setTitle(type.getTitle())
-                        .setBody(type.getBody(senderNickname))
-                        .build())
+                .putData("title", type.getTitle())
+                .putData("body", type.getBody(senderNickname))
                 .putData("url", url != null ? url : "")
                 .build();
 
