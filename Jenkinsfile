@@ -28,10 +28,13 @@ node {
     
     stage('Build') {
         withCredentials([
-            file(credentialsId: 'PROD_YML', variable: 'PROD_YML_PATH')
+            file(credentialsId: 'PROD_YML', variable: 'PROD_YML_PATH'),
+            file(credentialsId: 'FIREBASE_CREDENTIAL', variable: 'FIREBASE_JSON_PATH')
         ]) {
             sh 'mkdir -p src/main/resources'
             sh 'cp $PROD_YML_PATH src/main/resources/application-prod.yml'
+            sh 'mkdir -p src/main/resources/firebase'
+            sh 'cp $FIREBASE_JSON_PATH src/main/resources/firebase/notification-key.json'
             sh './gradlew build -Dspring.profiles.active=prod -x test'
         }
     }
