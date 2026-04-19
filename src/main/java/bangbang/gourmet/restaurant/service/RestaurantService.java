@@ -43,7 +43,7 @@ public class RestaurantService {
         if (keyword == null || keyword.isBlank()) {
             return List.of();
         }
-        return restaurantRepository.findByRestaurantNameContainingIgnoreCase(keyword)
+        return restaurantRepository.findByFullTextSearch(keyword)
                 .stream()
                 .map(r -> new RestaurantSearchResponse(
                         r.getRestaurantId(),
