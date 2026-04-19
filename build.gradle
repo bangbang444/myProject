@@ -84,8 +84,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
-	// p6spy - SQL 쿼리 로깅 (개발/디버깅용)
-	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+	// datasource-micrometer - 쿼리 실행시간 Prometheus 메트릭 수집
+	implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.0.3'
 
 	// spring-retry (낙관적 락 재시도)
 	implementation 'org.springframework.retry:spring-retry'
