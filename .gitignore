@@ -37,6 +37,8 @@ out/
 .vscode/
 
 # 보안
+.env
+.my.cnf
 /src/main/resources/application*.yml
 /src/test/resources/application*.yml
 /src/main/resources/firebase/**

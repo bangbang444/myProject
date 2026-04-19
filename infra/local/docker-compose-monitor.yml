@@ -11,6 +11,18 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld-exporter-local
+    ports:
+      - "9104:9104"
+    volumes:
+      - ./.my.cnf:/etc/mysql/.my.cnf
+    command:
+      - "--config.my-cnf=/etc/mysql/.my.cnf"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana-local
