@@ -2,6 +2,7 @@ package bangbang.gourmet.restaurant.entity;
 
 import bangbang.gourmet.common.entity.BaseEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class Restaurant extends BaseEntity {
     private String addressFull;
 
     @OneToMany(mappedBy = "restaurant")
+    @BatchSize(size = 20)
     @Builder.Default
     private final List<RestaurantImage> imageUrls = new ArrayList<>();
 

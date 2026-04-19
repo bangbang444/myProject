@@ -42,7 +42,7 @@ class RestaurantServiceTest {
                 .dong("선릉동")
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameContainingIgnoreCase("한식"))
+        given(restaurantRepository.findByFullTextSearch("한식*"))
                 .willReturn(List.of(r1, r2));
 
         // when
@@ -72,7 +72,7 @@ class RestaurantServiceTest {
     @DisplayName("키워드와 일치하는 식당이 없으면 빈 리스트를 반환한다")
     void searchByName_ReturnsEmptyList_WhenNoMatch() {
         // given
-        given(restaurantRepository.findByRestaurantNameContainingIgnoreCase("없는식당"))
+        given(restaurantRepository.findByFullTextSearch("없는식당*"))
                 .willReturn(List.of());
 
         // when
@@ -92,7 +92,7 @@ class RestaurantServiceTest {
                 .dong("역삼동")
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameContainingIgnoreCase("한식당"))
+        given(restaurantRepository.findByFullTextSearch("한식당*"))
                 .willReturn(List.of(restaurant));
 
         // when
@@ -113,7 +113,7 @@ class RestaurantServiceTest {
                 .dong("삼성동")
                 .build();
 
-        given(restaurantRepository.findByRestaurantNameContainingIgnoreCase("이미지없는집"))
+        given(restaurantRepository.findByFullTextSearch("이미지없는집*"))
                 .willReturn(List.of(restaurant));
 
         // when
