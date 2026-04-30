@@ -9,12 +9,15 @@
         </encoder>
     </appender>
 
-    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>logstash:5000</destination>
-        <reconnectionDelay>10 seconds</reconnectionDelay>
-        <keepAliveDuration>5 minutes</keepAliveDuration>
-        <queueSize>8192</queueSize>
-        <neverBlock>true</neverBlock>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/logs/gourmet.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>/logs/archive/gourmet.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
 
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
@@ -27,14 +30,21 @@
                 <threadName><fieldName>thread</fieldName></threadName>
                 <message><fieldName>message</fieldName></message>
                 <mdc><fieldName>mdc</fieldName></mdc>
-                <stackTrace><fieldName>stack_trace</fieldName></stackTrace> </providers>
+                <stackTrace><fieldName>stack_trace</fieldName></stackTrace>
+            </providers>
         </encoder>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FILE" />
     </appender>
 
     <!-- 로그 레벨 설정 -->
     <springProfile name="prod">
-        <root level="INFO"> <!-- INFO 레벨 이상의 로그만 취급 -->
-            <appender-ref ref="LOGSTASH" />
+        <root level="INFO">
+            <appender-ref ref="ASYNC_FILE" />
         </root>
     </springProfile>
 
