@@ -28,4 +28,5 @@
 * **Monitoring:** Discord Webhook (실시간 4xx, 5xx 에러 알림)
 
 ### 아키텍처
-<img width="1202" height="624" alt="image" src="https://github.com/user-attachments/assets/053af712-b0fe-4e03-bcf9-3d74f7a4c004" />
+<img width="15428" height="8336" alt="Project  Architecture" src="https://github.com/user-attachments/assets/d351ba7a-609e-49c0-b184-e369e891c917" />
+
