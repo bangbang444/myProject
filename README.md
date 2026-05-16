@@ -26,3 +26,6 @@
 * **Messaging:** Firebase (FCM을 활용한 실시간 푸시 알림 구현)
 * **AI Engine:** Spring AI
 * **Monitoring:** Discord Webhook (실시간 4xx, 5xx 에러 알림)
+
+### 아키텍처
+<img width="1202" height="624" alt="image" src="https://github.com/user-attachments/assets/053af712-b0fe-4e03-bcf9-3d74f7a4c004" />
