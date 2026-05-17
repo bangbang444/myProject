@@ -3,7 +3,7 @@ package bangbang.gourmet.user.service;
 import bangbang.gourmet.common.domain.SocialProvider;
 import bangbang.gourmet.common.security.jwt.JwtTokenProvider;
 import bangbang.gourmet.common.security.jwt.dto.TokenPair;
-import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
+import bangbang.gourmet.user.controller.dto.SocialUserInfo;
 import bangbang.gourmet.user.controller.dto.LoginResponse;
 import bangbang.gourmet.user.entity.User;
 import bangbang.gourmet.user.repository.UserRepository;
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Random;
 
 import static bangbang.gourmet.common.domain.Role.*;
-import static bangbang.gourmet.common.domain.SocialProvider.*;
+
 
 @Slf4j
 @Service
@@ -26,16 +26,16 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public LoginResponse socialLogin(KakaoUserInfo userInfo, SocialProvider provider) {
-        User user = userRepository.findByEmailAndProvider(userInfo.getEmail(), provider)
+    public LoginResponse socialLogin(SocialUserInfo userInfo, SocialProvider provider) {
+        User user = userRepository.findByEmailAndProvider(userInfo.email(), provider)
                 .orElseGet(() -> {
-                    String nickname = generateUniqueNickname(userInfo.getNickname());
+                    String nickname = generateUniqueNickname(userInfo.nickname());
                     User newUser = User.builder()
-                            .email(userInfo.getEmail())
+                            .email(userInfo.email())
                             .nickname(nickname)
                             .role(ROLE_USER)
-                            .providerId(String.valueOf(userInfo.id()))
-                            .provider(KAKAO)
+                            .providerId(String.valueOf(userInfo.providerId()))
+                            .provider(provider)
                             .build();
                     return userRepository.save(newUser);
                 });

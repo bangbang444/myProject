@@ -1,7 +1,7 @@
 package bangbang.gourmet.user.client;
 
-import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
+import bangbang.gourmet.user.controller.dto.SocialUserInfo;
 
 public interface SocialClient {
-    KakaoUserInfo getUserInfo(String code);
+    SocialUserInfo getUserInfo(String code);
 }

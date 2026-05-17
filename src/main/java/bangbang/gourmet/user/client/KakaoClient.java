@@ -3,6 +3,7 @@ package bangbang.gourmet.user.client;
 import bangbang.gourmet.config.KakaoProperties;
 import bangbang.gourmet.user.controller.dto.KakaoTokenResponse;
 import bangbang.gourmet.user.controller.dto.KakaoUserInfo;
+import bangbang.gourmet.user.controller.dto.SocialUserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -17,9 +18,10 @@ public class KakaoClient implements SocialClient {
     private final KakaoProperties kakaoProperties;
 
     @Override
-    public KakaoUserInfo getUserInfo(String code){
+    public SocialUserInfo getUserInfo(String code){
         KakaoTokenResponse tokens = getKakaoToken(code);
-        return getKakaoUserInfo(tokens.accessToken());
+        KakaoUserInfo kakao = getKakaoUserInfo(tokens.accessToken());
+        return new SocialUserInfo(kakao.id(), kakao.getEmail(), kakao.getNickname());
     }
 
     public KakaoTokenResponse getKakaoToken(String code){
