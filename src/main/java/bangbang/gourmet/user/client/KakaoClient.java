@@ -11,11 +11,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 @RequiredArgsConstructor
-public class KakaoClient {
+public class KakaoClient implements SocialClient {
     private final WebClient kakaoAuthClient;
     private final WebClient kakaoApiClient;
     private final KakaoProperties kakaoProperties;
 
+    @Override
     public KakaoUserInfo getUserInfo(String code){
         KakaoTokenResponse tokens = getKakaoToken(code);
         return getKakaoUserInfo(tokens.accessToken());
