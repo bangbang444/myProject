@@ -1,7 +1,7 @@
 package bangbang.gourmet.user.service;
 
 import bangbang.gourmet.common.security.jwt.service.RefreshTokenService;
-import bangbang.gourmet.user.client.KakaoClient;
+import bangbang.gourmet.user.client.SocialClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,12 +13,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class UserAuthServiceTest {
+class KakaoAuthServiceTest {
 
     @InjectMocks
-    private UserAuthService userAuthService;
+    private KakaoAuthService kakaoAuthService;
 
-    @Mock private KakaoClient kakaoClient;
+    @Mock private SocialClient socialClient;
     @Mock private UserService userService;
     @Mock private RefreshTokenService refreshTokenService;
 
@@ -27,7 +27,7 @@ class UserAuthServiceTest {
     void logout_DeletesRefreshToken() {
         Long userId = 1L;
 
-        userAuthService.logout(userId);
+        kakaoAuthService.logout(userId);
 
         verify(refreshTokenService, times(1)).deleteRefreshToken(userId);
     }
