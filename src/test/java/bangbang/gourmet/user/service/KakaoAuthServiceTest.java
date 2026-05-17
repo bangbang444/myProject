@@ -13,10 +13,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class UserAuthServiceTest {
+class KakaoAuthServiceTest {
 
     @InjectMocks
-    private UserAuthService userAuthService;
+    private KaKaoAuthService kakaoAuthService;
 
     @Mock private KakaoClient kakaoClient;
     @Mock private UserService userService;
@@ -27,7 +27,7 @@ class UserAuthServiceTest {
     void logout_DeletesRefreshToken() {
         Long userId = 1L;
 
-        userAuthService.logout(userId);
+        kakaoAuthService.logout(userId);
 
         verify(refreshTokenService, times(1)).deleteRefreshToken(userId);
     }
