@@ -1,3 +1,16 @@
+## 🍽️ Gourmet
+맛집 리뷰 SNS입니다. <br>
+사용자는 맛집을 검색하고 리뷰를 등록할 수 있습니다. <br>
+또한 식당 리뷰로 피드를 공유하고 사람들과 소통할 수 있습니다. <br>
+식당 정보는 크롤링으로 맛집 데이터를 자동 수집합니다. <br>
+
+## 주요 기능
+- 카카오 OAuth 소셜 로그인
+- 네이버 지도 크롤링 기반 맛집 자동 수집
+- 맛집 검색, 리뷰 작성, 댓글
+- 팔로우 · 좋아요 소셜 피드
+- FCM 실시간 푸시 알림
+
 ## 🛠 기술 스택
 
 ### 💻 백엔드 및 빌드
@@ -13,7 +26,7 @@
 * **CI/CD:** Jenkins
 * **Deployment:** Docker Compose
 * **Object Storage:** Garage (S3 Compatible Self-hosted Storage)
-* **Monitoring:** Prometheus, Grafana, Node Exporter
+* **Monitoring:** Prometheus, Grafana, Node Exporter, ELK(검토)
 
 ### 🧪 테스트 전략
 * **단위 테스트:** `Mockito` 기반 Service 레이어 단위 테스트
