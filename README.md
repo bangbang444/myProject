@@ -26,7 +26,7 @@
 * **CI/CD:** Jenkins
 * **Deployment:** Docker Compose
 * **Object Storage:** Garage (S3 Compatible Self-hosted Storage)
-* **Monitoring:** Prometheus, Grafana, Node Exporter, ELK(검토)
+* **Monitoring:** Promtail, Loki, Prometheus, Grafana, Node Exporter
 
 ### 🧪 테스트 전략
 * **단위 테스트:** `Mockito` 기반 Service 레이어 단위 테스트
